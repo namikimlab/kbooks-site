@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google"; // ✅ use Korean font
 import "./globals.css";
 
 import Header from "@/components/Header";
+import SearchHeader from "@/components/SearchHeader";
 import Footer from "@/components/Footer";
 
 const notoSans = Noto_Sans_KR({
@@ -27,6 +28,7 @@ export default function RootLayout({
         className={`${notoSans.variable} antialiased min-h-screen bg-background text-foreground`}
       >
         <Header />
+        <SearchHeader />
         <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
         <Footer />
       </body>

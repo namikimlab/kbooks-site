@@ -12,29 +12,28 @@ export default function Header() {
           책판
         </Link>
 
-        {/* Search bar */}
-        <form
-          action="/search"
-          method="GET"
-          className="flex flex-1 items-center gap-2"
-          role="search"
-          aria-label="책 검색"
+        {/* Middle: Menus (take remaining space) */}
+        <nav
+          className="mx-6 flex flex-1 items-center gap-4 text-sm"
+          aria-label="주요 메뉴"
         >
-          <Input
-            name="q"
-            placeholder="책 찾기"
-            required // prevent empty submits
-            aria-label="검색어"
-          />
-          <Button type="submit" size="sm" variant="secondary" aria-label="검색">
-            <Search className="h-4 w-4" />
-            <span className="sr-only">검색</span>
-          </Button>
-        </form>
-
+          <Link
+            href="/weekly"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            주간 베스트
+          </Link>
+          <Link
+            href="/life-list"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            인생 책 리스트
+          </Link>
+          {/* add more menu items here as needed */}
+        </nav>
 
         {/* Login */}
-        <Link href="/login">
+        <Link href="/login" className="ml-auto">
           <Button size="sm">로그인</Button>
         </Link>
       </div>
