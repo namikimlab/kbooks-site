@@ -2,6 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 
 export default function TrendingBooksSection() {
+  // Static Supabase cover for now
+  const placeholderCover =
+    "https://nthahtfalfrrzesxlzhy.supabase.co/storage/v1/object/public/covers_sample/book2.jpg";
+
   return (
     <section>
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
@@ -21,7 +25,7 @@ export default function TrendingBooksSection() {
                 <CardContent className="p-2">
                   <div className="relative aspect-[2/3] w-full rounded-md bg-muted">
                     <Image
-                      src={`https://placehold.co/200x300?text=Book+${i + 1}`}
+                      src={placeholderCover}
                       alt={`Book ${i + 1}`}
                       fill
                       className="object-cover rounded-md"

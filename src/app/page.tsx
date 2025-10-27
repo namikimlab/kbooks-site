@@ -1,4 +1,5 @@
 import DescriptionSection from "@/components/sections/DescriptionSection";
+import MonthlyRankingSection from "@/components/sections/MonthlyRankingSection";
 import TrendingBooksSection from "@/components/sections/TrendingBooksSection";
 import WeeklyRankingSection from "@/components/sections/WeeklyRankingSection";
 
@@ -8,6 +9,7 @@ export default function HomePage() {
       <DescriptionSection />
       <TrendingBooksSection />
       <WeeklyRankingSection />
+      <MonthlyRankingSection />
       {/* Add more sections here */}
     </main>
   );
