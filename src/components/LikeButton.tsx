@@ -89,7 +89,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
     };
   }, [isbn13, supabase]);
 
-  // 2. Click handler for like/unlike
+ // 2. Click handler for like/unlike
   async function handleToggleLike() {
     // if not logged in, we could redirect to /login
     if (!userId) {
@@ -107,20 +107,22 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
         .eq("user_id", userId)
         .eq("isbn13", isbn13);
 
-      if (!delErr) {
+      if (delErr) console.error("unlike failed:", delErr);
+      else {
         setLiked(false);
-        setLikeCount((prev) => (prev !== null ? prev - 1 : prev));
+        setLikeCount((n) => (n !== null ? n - 1 : n));
       }
     } else {
-      // like (insert row)
+       // like (insert row)
       const { error: insErr } = await supabase.from("book_likes").insert({
         user_id: userId,
-        isbn13: isbn13,
+        isbn13
       });
 
-      if (!insErr) {
+      if (insErr) console.error("like failed:", insErr);
+      else{
         setLiked(true);
-        setLikeCount((prev) => (prev !== null ? prev + 1 : 1));
+        setLikeCount((n) => (n !== null ? n + 1 : 1));
       }
     }
 
