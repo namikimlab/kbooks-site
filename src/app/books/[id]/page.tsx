@@ -82,7 +82,7 @@ export default async function BookDetailPage({
             {book.author_display || "저자 정보 없음"}
           </div>
 
-          {/* Publisher · Year */}
+          {/* Publisher info */}
           <div className="mt-1 text-sm text-muted-foreground leading-snug">
             {(book.publisher_name || "출판사 정보 없음") +
               " · " +

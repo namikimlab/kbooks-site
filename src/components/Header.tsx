@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { cookies } from "next/headers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 
-export default function Header() {
+export default async function Header() {
+  // Create a Supabase client that can read the user's auth session (from cookies)
+  const supabase = createServerComponentClient({ cookies });
+
+  // Ask Supabase who this request belongs to
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
@@ -29,13 +37,29 @@ export default function Header() {
           >
             인생 책 리스트
           </Link>
-          {/* add more menu items here as needed */}
         </nav>
 
-        {/* Login */}
-        <Link href="/login" className="ml-auto">
-          <Button size="sm">로그인</Button>
-        </Link>
+        {/* Right side: Auth area */}
+        <div className="ml-auto flex items-center gap-2">
+          {user ? (
+            <>
+              {/* Show the logged-in email (fallback in case it's null) */}
+              <span className="text-xs text-muted-foreground max-w-[140px] truncate">
+                {user.email ?? "로그인됨"}
+              </span>
+
+              <form action="/logout" method="post">
+                <Button size="sm" variant="outline" type="submit">
+                  로그아웃
+                </Button>
+              </form>
+            </>
+          ) : (
+            <Link href="/login">
+              <Button size="sm">로그인</Button>
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );
