@@ -74,7 +74,7 @@ export default async function RecentBooksSection() {
                           </div>
 
                           <div className="mt-1 text-[15px] text-muted-foreground leading-snug line-clamp-1">
-                            저자 : {book.author_display || "저자 정보 없음"}
+                            {book.author_display || "저자 정보 없음"}
                           </div>
 
                           {book.publisher_name && (
