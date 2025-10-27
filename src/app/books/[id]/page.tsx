@@ -1,6 +1,7 @@
 // app/books/[id]/page.tsx
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
+import LikeButton from "@/components/LikeButton"; 
 
 export default async function BookDetailPage({
   params,
@@ -88,7 +89,10 @@ export default async function BookDetailPage({
               " · " +
               (book.publish_date || "출판일 정보 없음")}
           </div>
-
+            
+          {/* Like button - 추천해요 */}
+          <LikeButton isbn13={book.isbn13} />
+          
           {/* Intro */}
           <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
             {book.book_introduction && book.book_introduction.trim().length > 0
