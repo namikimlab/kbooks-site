@@ -11,6 +11,7 @@ type Book = {
   authors?: string[] | null;
   publisher?: string | null;
   thumbnail?: string | null;
+  datetime?: string | null;
 };
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -36,39 +37,57 @@ export default async function SearchPage({ searchParams }: Props) {
       {results.length === 0 ? (
         <div className="mt-6 text-sm text-muted-foreground">일치하는 책이 없습니다.</div>
       ) : (
-        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((b) => (
-            <li key={b.isbn13}>
-              <Card className="overflow-hidden transition hover:shadow-sm">
-                <Link href={`/books/${b.isbn13}`}>
-                  <CardContent className="p-3">
-                    <div className="relative w-full aspect-[2/3] overflow-hidden rounded-md bg-muted">
-                      {b.thumbnail && (
-                        <Image
-                          src={b.thumbnail}
-                          alt={b.title ?? "책 표지"}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      )}
-                    </div>
-                    <div className="mt-3">
-                      <div className="line-clamp-2 font-medium">
-                        {b.title ?? "Unknown"}
+        <ul className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7">
+          {results.map((b) => {
+            const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
+
+            return (
+              <li key={b.isbn13}>
+                <Card className="overflow-hidden transition hover:shadow-sm">
+                  <Link href={`/books/${b.isbn13}`}>
+                    <CardContent className="p-3">
+                      {/* Cover */}
+                      <div className="flex justify-center">
+                        {b.thumbnail ? (
+                          <Image
+                            src={b.thumbnail}
+                            alt={b.title ?? "책 표지"}
+                            width={120}
+                            height={174}
+                            sizes="120px"
+                            className="rounded-md object-cover bg-muted"
+                            decoding="async"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-[120px] h-[174px] rounded-md bg-muted" />
+                        )}
                       </div>
-                      <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                        {b.authors?.join(", ") ?? "Unknown author"}
+
+                      {/* Text */}
+                      <div className="mt-3">
+                        {/* Full title */}
+                        <div className="font-medium text-sm md:text-base leading-relaxed break-words line-clamp-3">
+                          {b.title ?? "Unknown"}
+                        </div>
+
+                        {/* Author */}
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {b.authors?.join(", ") ?? "Unknown author"}
+                        </div>
+
+                        {/* Publisher + Year */}
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {b.publisher ?? "Unknown publisher"}
+                          {year ? ` · ${year}` : ""}
+                        </div>
                       </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {b.publisher ?? "Unknown publisher"}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Link>
-              </Card>
-            </li>
-          ))}
+                    </CardContent>
+                  </Link>
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>

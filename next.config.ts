@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
       { protocol: "https", hostname: "search1.kakaocdn.net", pathname: "/**" },
+      { protocol: "http", hostname: "t1.daumcdn.net", pathname: "/**" },
       { protocol: "https", hostname: "t1.daumcdn.net", pathname: "/**" },
 
     ],
