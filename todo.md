@@ -1,100 +1,107 @@
-## ✅ kBooks Social Login Preparation Checklist
+# 📘 KBooks Project Roadmap
 
-### 🏗️ 1. Environment & Domain Setup
-
-* [ ] Deploy kBooks site to a **public domain** (e.g. `https://kbooks.site` or Netlify/Vercel custom domain)
-* [ ] Ensure **HTTPS** is active (SSL certificate)
-* [ ] Confirm your domain matches exactly what will be used in Naver/Kakao console
-  *Example: `https://kbooks.site`, not `http://` or a subpath*
-* [ ] Add a visible **front page** with at least:
-
-  * [x] Hero title (“Discover and Share Books in Korea”)
-  * [ ] Featured “Silver Books” section (3–5 sample titles)
-  * [ ] “Login with Naver” and “Login with Kakao” buttons (placeholders OK for now)
-  * [x] Footer with “About”, “Privacy Policy”, “Contact”
+*Book discovery platform built with Supabase, dbt, and Next.js.*
 
 ---
 
-### 🔐 2. Naver Developer Console Setup
+## 🚀 Phase 1: MVP — Core Functionality & Security
 
-* [ ] Go to [Naver Developers Console](https://developers.naver.com/apps/#/register)
-* [ ] Create a **new application**
+**🎯 Goal:** Public browsing + safe auth + stable ingestion.
 
-  * [ ] App name: `kBooks`
-  * [ ] Service URL: your deployed site (e.g. `https://kbooks.site`)
-  * [ ] Callback (redirect) URL: e.g. `https://kbooks.site/api/auth/callback/naver`
-* [ ] Enable **“네이버 아이디로 로그인”**
-* [ ] Check permissions: only request **email** and **nickname** for now
-* [ ] Copy the **Client ID** and **Client Secret** into `.env.local`
+### 🔒 Data & Governance
 
-  ```
-  NAVER_CLIENT_ID=xxxxx
-  NAVER_CLIENT_SECRET=xxxxx
-  ```
-* [ ] Configure your app (NextAuth, Supabase Auth, etc.) to support the Naver provider
+* [x] Move `raw_nl_books` to **private schema**
+* [ ] Enable **RLS** for all public-facing tables (`books_public`, `recent_publish_books`, `book_likes`)
+* [ ] Finalize **incremental dbt model** for `silver_books` (dedup + `fetched_at` logic)
+* [x] Add dbt tests (`unique`, `not_null`) for key columns
+* [x] Create indexes via dbt `post_hook` (`isbn13`, `title_trgm`, `tsv`)
+* [ ] Add Metabase overview of data summary
 
----
+### 🌐 Frontend
 
-### 💛 3. Kakao Developer Console Setup
+* [x] Build **Recent Books** page (using `recent_publish_books`)
+* [x] Build **Book Detail** page (title, author, publisher, intro, cover)
+* [x] Add working **Like / Unlike** button connected to Supabase
 
-* [ ] Go to [Kakao Developers Console](https://developers.kakao.com/console/app)
-* [ ] Create a **new app**: `kBooks`
-* [ ] Under “Kakao Login” settings:
+### 🔑 Auth
 
-  * [ ] Enable Kakao Login
-  * [ ] Register redirect URI:
-    e.g. `https://kbooks.site/api/auth/callback/kakao`
-* [ ] Get **REST API Key** and **Client Secret**
-* [ ] Add them to `.env.local`
+* [ ] Enable Supabase Auth (**MagicLink**, **Kakao**)
+* [x] Protect like/unlike behind login redirect
+* [x] Add `/login` page and redirect flow
 
-  ```
-  KAKAO_CLIENT_ID=xxxxx
-  KAKAO_CLIENT_SECRET=xxxxx
-  ```
-* [ ] Configure your app’s auth logic to include Kakao provider
+### 🧰 Infra & Docs
+
+* [ ] Add `.env.example`
+* [ ] Create minimal **README** (local setup + Supabase/dbt overview)
+* [ ] Add Supabase + dbt **schema diagram**
+
+✅ **MVP Done When:**
+Users can browse books, view details, and like/unlike (if logged in), without exposing raw data.
 
 ---
 
-### 🧱 4. Front-End Integration
+## 🧱 Phase 2: v1.0 — Stability & Analytics
 
-* [ ] Place buttons visibly on front page and/or `/login` route
+**🎯 Goal:** Full auth, richer content, automated updates.
 
-  * [ ] ✅ “네이버 아이디로 로그인” button (official green style or similar)
-  * [ ] ✅ “카카오로 로그인” button (official yellow style or similar)
-* [ ] Add a **hover or tooltip** showing “Login with your Naver/Kakao account”
-* [ ] Ensure they call your auth provider endpoint (`/api/auth/signin/naver` or `/api/auth/signin/kakao`)
-* [ ] After successful login, redirect to `/profile` or `/books`
+### 🧩 Data Layer
 
----
+* [ ] Add **Gold marts:**
 
-### 📄 5. Legal & Content Requirements
+  * `book_likes`
+  * `book_like_counters`
+  * `book_rankings_daily`, `book_rankings_weekly`, `book_rankings_monthly`
+* [ ] Automate dbt job or Supabase cron (nightly run)
+* [ ] Add **data validation & freshness tests**
 
-* [ ] Create `/privacy` page (basic template fine)
-* [ ] Create `/terms` page (optional but recommended)
-* [x] Add `/contact` or footer email (for reviewer)
-* [x] Add `/about` explaining “kBooks” concept
-* [ ] Confirm the site shows **real content** (not just placeholders)
+### 🌐 Frontend
 
-  * [ ] Use sample data from `silver_books` for visible listings
+* [ ] Add **Home/Landing page** content (for Naver·Kakao verification)
+* [ ] Add **About**, **Privacy Policy**, **Contact** pages (footer links)
+* [ ] Add **custom 404/500 pages**
 
----
+### 🔑 Auth
 
-### 🧪 6. Verification Readiness
+* [ ] Integrate **Naver** and **Kakao** login
+* [ ] Add `user_profiles` table (nickname, created_at)
+* [ ] Add “redirect to last page” post-login
 
-* [ ] Ensure:
+### 🧰 Infra
 
-  * [ ] The **Naver** login button works from the live site (redirect completes)
-  * [ ] The **Kakao** login button works from the live site
-  * [ ] The reviewer can browse your books **without login**
-  * [ ] The reviewer can **login** successfully and see basic profile
-* [ ] Capture 3 screenshots for submission:
+* [ ] **Dockerize dbt** for reproducible builds
+* [ ] Version-control DB migrations
+* [ ] Add lightweight **Supabase monitoring** (disk usage, index size, query time)
 
-  1. Front page with visible login buttons
-  2. Naver/Kakao consent screen
-  3. Logged-in success screen
-* [ ] Submit for review to Naver (and later Kakao)
+✅ **v1.0 Done When:**
+Fully-authenticated site with stable nightly updates and proper governance.
 
 ---
 
-Would you like me to make a second version that fits **Next.js + NextAuth + Supabase Auth** specifically (i.e., exact env variable names, callback paths, and setup order)?
-That would give you a ready-to-follow technical checklist next.
+## ✨ Phase 3: Polish & Growth — UX, Speed, Visibility
+
+**🎯 Goal:** Fast, searchable, and visually refined.
+
+### 📈 Search & Performance
+
+* [ ] Finalize **FTS** on `silver_books` (title + author)
+* [ ] Add **search ranking**, pagination, and infinite scroll
+* [ ] Implement caching (Supabase Edge Functions or client-side)
+
+### 🎨 Frontend Polish
+
+* [ ] Improve typography, spacing, and **mobile layout**
+* [ ] Add **skeleton loaders** and empty-state components
+* [ ] Strengthen **error handling** (network, 404, etc.)
+
+### 📚 Docs & Showcase
+
+* [ ] Write **blog post:** “How KBooks connects NLK data to Supabase with dbt”
+* [ ] Add **architecture diagram** and deployment guide
+* [ ] Include **demo dataset** or preview account
+
+✅ **Public Launch Ready When:**
+Search is fast, UX polished, backend documented — ready for public demo or investor review.
+
+---
+
+Would you like me to also generate a **`ROADMAP.svg` diagram** (phases → tasks → dependencies) for your GitHub README using Mermaid syntax? It’ll render visually right on GitHub.

@@ -3,11 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'nl.go.kr',
-        pathname: '/**',
-      },
+      { protocol: "http",  hostname: "www.nl.go.kr", pathname: "/**" }, // <-- add this
+      { protocol: "https", hostname: "www.nl.go.kr", pathname: "/**" },
+      { protocol: "https", hostname: "nl.go.kr",      pathname: "/**" },
       {
         protocol: "https",
         hostname: "nthahtfalfrrzesxlzhy.supabase.co",
