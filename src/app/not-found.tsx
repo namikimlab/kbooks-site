@@ -1,3 +1,6 @@
+import React from "react";
+import Link from "next/link";
+
 export default function NotFound() {
   return (
     <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6">
@@ -7,12 +10,12 @@ export default function NotFound() {
         문제가 지속되면 알려주세요
       </p>
 
-      <a
+      <Link
         href="/"
         className="mt-6 inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
       >
         ← 돌아가기
-      </a>
+      </Link>
     </main>
   );
 }

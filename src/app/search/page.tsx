@@ -1,3 +1,4 @@
+// src/app/search/page.tsx
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -5,20 +6,23 @@ import Image from "next/image";
 
 type Props = { searchParams: { q?: string } };
 
+type Book = {
+  isbn13: string;
+  title: string | null;
+  author_display?: string | null;
+  publisher_name?: string | null;
+  cover_url?: string | null;
+};
+
 export default async function SearchPage({ searchParams }: Props) {
   const q = (searchParams.q ?? "").trim();
 
-  let data, error;
-
-  // ✅ Real search on public.book_public using FTS
-  const res = await supabase
+  // Query Supabase (websearch FTS on tsv)
+  const { data, error } = await supabase
     .from("book_public")
     .select("isbn13, title, author_display, publisher_name, cover_url")
     .textSearch("tsv", q, { type: "websearch" })
     .limit(30);
-
-  data = res.data;
-  error = res.error;
 
   if (error) {
     return (
@@ -29,8 +33,8 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
-  // Real search results
-  const results = data ?? [];
+  const results: Book[] = (data ?? []) as Book[];
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-xl font-semibold">검색 결과</h1>
@@ -44,30 +48,32 @@ export default async function SearchPage({ searchParams }: Props) {
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((b: any) => (
+          {results.map((b: Book) => (
             <li key={b.isbn13}>
-              <Card className="overflow-hidden hover:shadow-sm transition">
+              <Card className="overflow-hidden transition hover:shadow-sm">
                 <Link href={`/books/${b.isbn13}`}>
                   <CardContent className="p-3">
-                    <div className="relative w-full aspect-[2/3] rounded-md bg-muted overflow-hidden">
+                    <div className="relative w-full aspect-[2/3] overflow-hidden rounded-md bg-muted">
                       {b.cover_url ? (
                         <Image
                           src={b.cover_url}
-                          alt={b.title || "Unknown"}
+                          alt={b.title ?? "책 표지"}
                           fill
                           className="object-cover"
+                          // (Optional) helps with layout when using `fill`
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : null}
                     </div>
                     <div className="mt-3">
-                      <div className="font-medium line-clamp-2">
-                        {b.title || "Unknown"}
+                      <div className="line-clamp-2 font-medium">
+                        {b.title ?? "Unknown"}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                        {b.author_display || "Unknown author"}
+                      <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                        {b.author_display ?? "Unknown author"}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {b.publisher_name || "Unknown publisher"}
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {b.publisher_name ?? "Unknown publisher"}
                       </div>
                     </div>
                   </CardContent>
