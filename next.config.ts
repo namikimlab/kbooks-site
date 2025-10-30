@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
         hostname: "nthahtfalfrrzesxlzhy.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      { protocol: "https", hostname: "search1.kakaocdn.net", pathname: "/**" },
+      { protocol: "https", hostname: "t1.daumcdn.net", pathname: "/**" },
+
     ],
   },
 };
