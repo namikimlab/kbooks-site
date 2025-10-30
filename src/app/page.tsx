@@ -8,8 +8,6 @@ export default function HomePage() {
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       <DescriptionSection />
       <RecentBooksSection />
-      <WeeklyRankingSection />
-      <MonthlyRankingSection />
       {/* Add more sections here */}
     </main>
   );
