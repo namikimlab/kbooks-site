@@ -29,12 +29,6 @@
 * [x] Protect like/unlike behind login redirect
 * [x] Add `/login` page and redirect flow
 
-### 🧰 Infra & Docs
-
-* [ ] Add `.env.example`
-* [ ] Create minimal **README** (local setup + Supabase/dbt overview)
-* [ ] Add Supabase + dbt **schema diagram**
-
 ✅ **MVP Done When:**
 Users can browse books, view details, and like/unlike (if logged in), without exposing raw data.
 

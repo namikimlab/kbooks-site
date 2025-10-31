@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: "http",  hostname: "www.nl.go.kr", pathname: "/**" }, // <-- add this
+      { protocol: "http",  hostname: "www.nl.go.kr", pathname: "/**" }, 
       { protocol: "https", hostname: "www.nl.go.kr", pathname: "/**" },
       { protocol: "https", hostname: "nl.go.kr",      pathname: "/**" },
       {
@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "search1.kakaocdn.net", pathname: "/**" },
       { protocol: "http", hostname: "t1.daumcdn.net", pathname: "/**" },
       { protocol: "https", hostname: "t1.daumcdn.net", pathname: "/**" },
+      { protocol: "https", hostname: "contents.kyobobook.co.kr", pathname: "/**" },
 
     ],
   },

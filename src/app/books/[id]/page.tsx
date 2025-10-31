@@ -1,103 +1,76 @@
-// app/books/[id]/page.tsx
-import Image from "next/image";
-import { createClient } from "@supabase/supabase-js";
-import LikeButton from "@/components/LikeButton"; 
+import LikeButton from "@/components/LikeButton";
+import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
+import CoverImage from "@/components/CoverImage";
+
+export const revalidate = 3600; // ISR 1h
 
 export default async function BookDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: { id: string }; // isbn13
 }) {
-  // Create Supabase client using public anon key
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_KEY as string
-  );
+  const isbn13 = params.id;
+  const kb = await kakaoLookupByIsbn(isbn13);
 
-  // Fetch the book from kbooks_dbt.silver_books by isbn13
-  const { data: book, error } = await supabase
-    .from("book_public")
-    .select(
-      `
-      isbn13,
-      title,
-      cover_url,
-      author_display,
-      publisher_name,
-      publish_date,
-      publish_predate,
-      book_introduction
-      `
-    )
-    .eq("isbn13", params.id)
-    .maybeSingle();
-
-  const placeholderCover =
-    "https://nthahtfalfrrzesxlzhy.supabase.co/storage/v1/object/public/covers_sample/book2.jpg";
-
-  // If we couldn't load the book, show fallback page
-  if (!book || error) {
+  if (!kb) {
     return (
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
         <div className="mx-auto mb-6 aspect-[2/3] w-40 rounded-xl bg-muted" />
-        <div className="text-base font-medium text-foreground">
-          책 정보를 찾을 수 없어요
-        </div>
+        <div className="text-base font-medium text-foreground">책 정보를 찾을 수 없어요</div>
         <div className="mt-2 text-sm text-muted-foreground">
-          요청한 ISBN:{" "}
-          <span className="font-mono text-foreground">{params.id}</span>
+          요청한 ISBN: <span className="font-mono text-foreground">{isbn13}</span>
         </div>
       </main>
     );
   }
 
+  const { title, authors, publisher, datetime, thumbnail, contents } = kb;
+
+  // Kyobo first, Kakao fallback
+  const kyoboCover = `https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/${isbn13}.jpg`;
+  const kakaoCover = thumbnail || null;
+
+  // Year (safe parse)
+  let year: number | null = null;
+  if (datetime) {
+    const t = Date.parse(datetime);
+    if (!Number.isNaN(t)) year = new Date(t).getFullYear();
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-      {/* Mobile: 1 col. Desktop: 2 cols. */}
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
-        {/* LEFT: cover */}
+        {/* LEFT: cover (client component handles fallback) */}
         <div className="flex justify-center md:block">
-          <div className="w-full max-w-[320px]">
-            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-muted shadow-sm">
-              <Image
-                src={book.cover_url || placeholderCover}
-                alt={book.title || "Book cover"}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 320px"
-              />
-            </div>
+          <div className="w-full max-w-[360px]">
+            <CoverImage
+              primarySrc={kyoboCover}
+              fallbackSrc={kakaoCover}
+              alt={title ?? "책 표지"}
+            />
           </div>
         </div>
 
         {/* RIGHT: title + meta */}
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
-          {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-semibold leading-snug tracking-tight">
-            {book.title || "제목 정보 없음"}
+          <h1 className="text-2xl md:text-3xl font-semibold leading-snug tracking-tight line-clamp-3 break-words">
+            {title ?? "제목 정보 없음"}
           </h1>
 
-          {/* Author */}
           <div className="mt-2 text-base text-muted-foreground leading-snug">
-            {book.author_display || "저자 정보 없음"}
+            {authors?.length ? authors.join(", ") : "저자 정보 없음"}
           </div>
 
-          {/* Publisher info */}
           <div className="mt-1 text-sm text-muted-foreground leading-snug">
-            {(book.publisher_name || "출판사 정보 없음") +
-              " · " +
-              (book.publish_date || "출판일 정보 없음")}
+            {(publisher ?? "출판사 정보 없음")}{year ? ` · ${year}` : ""}
           </div>
-            
-          {/* Like button - 추천해요 */}
-          <LikeButton isbn13={book.isbn13} />
-          
-          {/* Intro */}
+
+          <div className="mt-3">
+            <LikeButton isbn13={kb.isbn13} />
+          </div>
+
           <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
-            {book.book_introduction && book.book_introduction.trim().length > 0
-              ? book.book_introduction
-              : "소개 정보가 아직 없습니다."}
+            {contents?.trim() ? contents : "소개 정보가 아직 없습니다."}
           </p>
         </div>
       </section>
