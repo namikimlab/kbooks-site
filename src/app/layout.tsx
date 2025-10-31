@@ -27,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${notoSans.variable} antialiased min-h-screen bg-background text-foreground`}
       >
-        <Header />
+        <Header /> 
         <SearchHeader />
         <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
         <Footer />
