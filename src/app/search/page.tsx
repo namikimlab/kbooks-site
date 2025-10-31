@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { kakaoSearch } from "@/lib/kakaoSearch";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 type Props = { searchParams: Promise<{ q?: string }> };
 
@@ -12,15 +11,13 @@ type Book = {
   title: string | null;
   authors?: string[] | null;
   publisher?: string | null;
-  thumbnail?: string | null; // kept but not used for src (we use /api/covers)
+  thumbnail?: string | null;
   datetime?: string | null;
 };
 
 export default async function SearchPage({ searchParams }: Props) {
-  const { q = "" } = await searchParams; // ✅ Next 15: await dynamic API
+  const { q = "" } = await searchParams; // ✅ Dynamic API awaited
   const query = q.trim();
-
-  const supabase = await createSupabaseServerClient();
 
   if (!query) {
     return (
@@ -30,6 +27,7 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
+  // Stateless: only Kakao + your /api/thumbs proxy
   const { documents } = await kakaoSearch(query);
   const results: Book[] = documents ?? [];
 
@@ -45,7 +43,6 @@ export default async function SearchPage({ searchParams }: Props) {
       ) : (
         <ul className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7">
           {results.map((b) => {
-            // Safe year extraction
             let year: number | null = null;
             if (b?.datetime) {
               const t = Date.parse(b.datetime);
@@ -57,11 +54,10 @@ export default async function SearchPage({ searchParams }: Props) {
                 <Card className="overflow-hidden transition hover:shadow-sm">
                   <Link href={`/books/${b.isbn13}`}>
                     <CardContent className="p-3">
-                      {/* Cover (cached via /api/covers -> Supabase) */}
                       <div className="flex justify-center">
                         {b.isbn13 ? (
                           <Image
-                            src={`/api/thumbs/${b.isbn13}`} 
+                            src={`/api/thumbs/${b.isbn13}`}
                             alt={b.title ?? "책 표지"}
                             width={120}
                             height={174}
@@ -75,19 +71,13 @@ export default async function SearchPage({ searchParams }: Props) {
                         )}
                       </div>
 
-                      {/* Text */}
                       <div className="mt-3">
-                        {/* Title: clamp 3 lines always */}
                         <div className="font-medium text-sm md:text-base leading-relaxed break-words line-clamp-3">
                           {b.title ?? "Unknown"}
                         </div>
-
-                        {/* Author */}
                         <div className="mt-1 text-xs text-muted-foreground">
                           {b.authors?.join(", ") ?? "Unknown author"}
                         </div>
-
-                        {/* Publisher · Year */}
                         <div className="mt-0.5 text-xs text-muted-foreground">
                           {b.publisher ?? "Unknown publisher"}
                           {year ? ` · ${year}` : ""}
