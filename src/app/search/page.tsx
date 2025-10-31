@@ -1,22 +1,25 @@
+// app/search/page.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { kakaoSearch } from "@/lib/kakaoSearch";
 
-type Props = { searchParams: { q?: string } };
+type Props = { searchParams: Promise<{ q?: string }> };
 
 type Book = {
   isbn13: string;
   title: string | null;
   authors?: string[] | null;
   publisher?: string | null;
-  thumbnail?: string | null;
+  thumbnail?: string | null; // kept but not used for src (we use /api/covers)
   datetime?: string | null;
 };
 
 export default async function SearchPage({ searchParams }: Props) {
-  const q = (searchParams.q ?? "").trim();
-  if (!q) {
+  const { q = "" } = await searchParams; // ✅ Next 15: await dynamic API
+  const query = q.trim();
+
+  if (!query) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-xl font-semibold">검색어를 입력하세요</h1>
@@ -24,7 +27,7 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
-  const { documents } = await kakaoSearch(q);
+  const { documents } = await kakaoSearch(query);
   const results: Book[] = documents ?? [];
 
   return (
@@ -39,18 +42,23 @@ export default async function SearchPage({ searchParams }: Props) {
       ) : (
         <ul className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7">
           {results.map((b) => {
-            const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
+            // Safe year extraction
+            let year: number | null = null;
+            if (b?.datetime) {
+              const t = Date.parse(b.datetime);
+              if (!Number.isNaN(t)) year = new Date(t).getFullYear();
+            }
 
             return (
               <li key={b.isbn13}>
                 <Card className="overflow-hidden transition hover:shadow-sm">
                   <Link href={`/books/${b.isbn13}`}>
                     <CardContent className="p-3">
-                      {/* Cover */}
+                      {/* Cover (cached via /api/covers -> Supabase) */}
                       <div className="flex justify-center">
-                        {b.thumbnail ? (
+                        {b.isbn13 ? (
                           <Image
-                            src={b.thumbnail}
+                            src={`/api/covers/${b.isbn13}`}
                             alt={b.title ?? "책 표지"}
                             width={120}
                             height={174}
@@ -66,7 +74,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
                       {/* Text */}
                       <div className="mt-3">
-                        {/* Full title */}
+                        {/* Title: clamp 3 lines always */}
                         <div className="font-medium text-sm md:text-base leading-relaxed break-words line-clamp-3">
                           {b.title ?? "Unknown"}
                         </div>
@@ -76,7 +84,7 @@ export default async function SearchPage({ searchParams }: Props) {
                           {b.authors?.join(", ") ?? "Unknown author"}
                         </div>
 
-                        {/* Publisher + Year */}
+                        {/* Publisher · Year */}
                         <div className="mt-0.5 text-xs text-muted-foreground">
                           {b.publisher ?? "Unknown publisher"}
                           {year ? ` · ${year}` : ""}

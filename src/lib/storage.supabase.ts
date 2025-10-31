@@ -4,7 +4,7 @@ import type { CoverStore } from "./storage";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE! // server-only
+  process.env.SUPABASE_SECRET_KEY! // server-only
 );
 const BUCKET = "book-covers";
 

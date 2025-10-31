@@ -25,10 +25,11 @@ export default function TrendingBooksSection() {
                 <CardContent className="p-2">
                   <div className="relative aspect-[2/3] w-full rounded-md bg-muted">
                     <Image
-                      src={placeholderCover}
-                      alt={`Book ${i + 1}`}
-                      fill
-                      className="object-cover rounded-md"
+                      src={`/api/covers/${b.isbn13}`}
+                      alt={b.title ?? "책 표지"}
+                      width={120}
+                      height={174}
+                      className="rounded-md object-cover bg-muted"
                     />
                   </div>
                 </CardContent>

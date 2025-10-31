@@ -1,3 +1,4 @@
+// app/books/[id]/page.tsx
 import LikeButton from "@/components/LikeButton";
 import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
 import CoverImage from "@/components/CoverImage";
@@ -7,9 +8,12 @@ export const revalidate = 3600; // ISR 1h
 export default async function BookDetailPage({
   params,
 }: {
-  params: { id: string }; // isbn13
+  params: Promise<{ id: string }>; // ✅ Next 15: params is a Promise
 }) {
-  const isbn13 = params.id;
+  const { id } = await params;       // ✅ await before using
+  const isbn13 = id;
+
+  // Kakao lookup (detail content source)
   const kb = await kakaoLookupByIsbn(isbn13);
 
   if (!kb) {
@@ -26,7 +30,7 @@ export default async function BookDetailPage({
 
   const { title, authors, publisher, datetime, thumbnail, contents } = kb;
 
-  // Kyobo first, Kakao fallback
+  // Kyobo first, Kakao fallback (client component handles onError swap)
   const kyoboCover = `https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/${isbn13}.jpg`;
   const kakaoCover = thumbnail || null;
 
@@ -66,7 +70,7 @@ export default async function BookDetailPage({
           </div>
 
           <div className="mt-3">
-            <LikeButton isbn13={kb.isbn13} />
+            <LikeButton isbn13={isbn13} />
           </div>
 
           <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
