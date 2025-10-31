@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { kakaoSearch } from "@/lib/kakaoSearch";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 type Props = { searchParams: Promise<{ q?: string }> };
 
@@ -19,6 +20,8 @@ export default async function SearchPage({ searchParams }: Props) {
   const { q = "" } = await searchParams; // ✅ Next 15: await dynamic API
   const query = q.trim();
 
+  const supabase = await createSupabaseServerClient();
+  
   if (!query) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
