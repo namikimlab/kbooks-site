@@ -21,7 +21,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const query = q.trim();
 
   const supabase = await createSupabaseServerClient();
-  
+
   if (!query) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
@@ -61,7 +61,7 @@ export default async function SearchPage({ searchParams }: Props) {
                       <div className="flex justify-center">
                         {b.isbn13 ? (
                           <Image
-                            src={`/api/covers/${b.isbn13}`}
+                            src={`/api/thumbs/${b.isbn13}`} 
                             alt={b.title ?? "책 표지"}
                             width={120}
                             height={174}
