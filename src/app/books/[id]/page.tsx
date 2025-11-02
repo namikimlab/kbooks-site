@@ -8,12 +8,11 @@ export const revalidate = 3600; // ISR 1h
 export default async function BookDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>; // ✅ Next 15: params is a Promise
+  params: Promise<{ id: string }>; // Next 15
 }) {
-  const { id } = await params;       // ✅ await before using
+  const { id } = await params; // await required
   const isbn13 = id;
 
-  // Kakao lookup (detail content source)
   const kb = await kakaoLookupByIsbn(isbn13);
 
   if (!kb) {
@@ -28,13 +27,8 @@ export default async function BookDetailPage({
     );
   }
 
-  const { title, authors, publisher, datetime, thumbnail, contents } = kb;
+  const { title, authors, publisher, datetime, contents } = kb;
 
-  // Kyobo first, Kakao fallback (client component handles onError swap)
-  const kyoboCover = `https://contents.kyobobook.co.kr/sih/fit-in/458x0/pdt/${isbn13}.jpg`;
-  const kakaoCover = thumbnail || null;
-
-  // Year (safe parse)
   let year: number | null = null;
   if (datetime) {
     const t = Date.parse(datetime);
@@ -44,35 +38,27 @@ export default async function BookDetailPage({
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
-        {/* LEFT: cover (client component handles fallback) */}
+        {/* LEFT: cover */}
         <div className="flex justify-center md:block">
           <div className="w-full max-w-[360px]">
-            <CoverImage
-              primarySrc={kyoboCover}
-              fallbackSrc={kakaoCover}
-              alt={title ?? "책 표지"}
-            />
+            <CoverImage isbn13={isbn13} alt={title ?? "책 표지"} />
           </div>
         </div>
 
-        {/* RIGHT: title + meta */}
+        {/* RIGHT: meta */}
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
           <h1 className="text-2xl md:text-3xl font-semibold leading-snug tracking-tight line-clamp-3 break-words">
             {title ?? "제목 정보 없음"}
           </h1>
-
           <div className="mt-2 text-base text-muted-foreground leading-snug">
             {authors?.length ? authors.join(", ") : "저자 정보 없음"}
           </div>
-
           <div className="mt-1 text-sm text-muted-foreground leading-snug">
             {(publisher ?? "출판사 정보 없음")}{year ? ` · ${year}` : ""}
           </div>
-
           <div className="mt-3">
             <LikeButton isbn13={isbn13} />
           </div>
-
           <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
             {contents?.trim() ? contents : "소개 정보가 아직 없습니다."}
           </p>

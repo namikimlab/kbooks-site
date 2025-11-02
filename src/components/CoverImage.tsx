@@ -1,17 +1,26 @@
+// components/CoverImage.tsx
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useState } from "react";
 
 type Props = {
-  primarySrc: string;     // Kyobo
-  fallbackSrc?: string | null; // Kakao (optional)
+  isbn13: string;
   alt: string;
+  // optional: let caller decide size; defaults work for detail page
+  sizes?: string;
+  priority?: boolean;
 };
 
-export default function CoverImage({ primarySrc, fallbackSrc, alt }: Props) {
-  const [src, setSrc] = useState(primarySrc);
-  const [attemptedFallback, setAttemptedFallback] = useState(false);
+export default function CoverImage({
+  isbn13,
+  alt,
+  sizes = "(max-width: 768px) 70vw, 360px",
+  priority = true,
+}: Props) {
+  // Single API source of truth
+  const apiSrc = `/api/covers/${isbn13}`;
+  const [src, setSrc] = useState(apiSrc);
 
   return (
     <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-muted shadow-sm">
@@ -20,17 +29,12 @@ export default function CoverImage({ primarySrc, fallbackSrc, alt }: Props) {
         alt={alt}
         fill
         className="object-contain"
-        priority
-        sizes="(max-width: 768px) 70vw, 360px"
+        priority={priority}
+        sizes={sizes}
+        // Final local fallback only if API somehow fails
         onError={() => {
-          // Switch to Kakao once; if it also fails, show a gray box
-          if (!attemptedFallback && fallbackSrc && src !== fallbackSrc) {
-            setAttemptedFallback(true);
-            setSrc(fallbackSrc);
-          } else {
-            // final placeholder (transparent 1x1 or keep gray box behind)
-            // no further action needed: the gray bg-muted is visible
-          }
+          const localFallback = "/placeholder-cover.jpg";
+          if (src !== localFallback) setSrc(localFallback);
         }}
       />
     </div>
