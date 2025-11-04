@@ -42,8 +42,12 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
           .eq("isbn13", isbn13)
           .maybeSingle();
 
+        if (ignore) return;
+
         if (!likeErr && existingLike) {
           setLiked(true);
+        } else if (!likeErr) {
+          setLiked(false);
         }
       } else {
         // not logged in
@@ -52,34 +56,22 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
       }
 
       // get total like count (public aggregate; RLS shouldn't block counting)
-      // note: this is a naive public count. if RLS blocks this later,
-      // we can expose a read-only view or RPC. for now let's try direct.
-      const { data: countRows, error: countErr } = await supabase
+      const { count, error: countErr } = await supabase
         .from("book_likes")
         .select("isbn13", { count: "exact", head: true })
         .eq("isbn13", isbn13);
 
-      if (!countErr && typeof countRows?.length !== "undefined") {
-        // supabase js returns count in a weird place:
-        // countRows is an empty array because head:true
-        // but `count` lives on the response itself, not data
-        // we don't have direct access here unless we destructure differently.
-        // So let's re-do this without head:true to keep it simple.
-      }
+      if (ignore) return;
 
-      // simple version: actually fetch rows and count in JS
-      const { data: allLikes, error: allErr } = await supabase
-        .from("book_likes")
-        .select("user_id")
-        .eq("isbn13", isbn13);
-
-      if (!allErr && allLikes) {
-        setLikeCount(allLikes.length);
+      if (!countErr && typeof count === "number") {
+        setLikeCount(count);
       } else {
         setLikeCount(null);
       }
 
-      setLoading(false);
+      if (!ignore) {
+        setLoading(false);
+      }
     }
 
     init();
@@ -89,7 +81,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
     };
   }, [isbn13, supabase]);
 
- // 2. Click handler for like/unlike
+  // 2. Click handler for like/unlike
   async function handleToggleLike() {
     // if not logged in, we could redirect to /login
     if (!userId) {
