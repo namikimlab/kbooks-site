@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useMemo, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
 
 export default function LoginPage() {
   // local state for the email input and status message
@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [status, setStatus] = useState<null | string>(null);
 
   // get a Supabase client we can use in a Client Component
-  const supabase = createClientComponentClient();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   async function handleSendLink(e: React.FormEvent) {
     e.preventDefault();

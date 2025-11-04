@@ -1,24 +1,20 @@
 // components/AuthArea.client.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
 
 export default function AuthArea() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserEmail(data.user?.email ?? null);
     });
-  }, []);
+  }, [supabase]);
 
   async function handleLogout() {
     await supabase.auth.signOut();

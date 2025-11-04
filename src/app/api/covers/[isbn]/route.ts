@@ -2,18 +2,11 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
+import { createSupabaseServiceRoleClient } from "@/lib/supabaseClients";
 
 const BUCKET = "book-covers";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
-
-if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY");
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
+const supabase = createSupabaseServiceRoleClient();
 
 // --- Kyobo placeholder: HASH-ONLY ---
 const KYOBO_PLACEHOLDER_SHA256 = new Set<string>([

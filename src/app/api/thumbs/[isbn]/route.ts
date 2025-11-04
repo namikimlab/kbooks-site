@@ -2,8 +2,8 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
+import { createSupabaseServiceRoleClient } from "@/lib/supabaseClients";
 
 // --- assumptions (adjust if your key scheme differs) ---
 // - Large image in Supabase bucket at: book-covers/{isbn}.jpg
@@ -11,9 +11,7 @@ import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
 // -------------------------------------------------------
 
 const BUCKET = "book-covers";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
+const supabase = createSupabaseServiceRoleClient();
 
 export async function GET(
   req: Request,

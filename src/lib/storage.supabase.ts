@@ -1,11 +1,8 @@
 // lib/storage.supabase.ts
-import { createClient } from "@supabase/supabase-js";
 import type { CoverStore } from "./storage";
+import { createSupabaseServiceRoleClient } from "./supabaseClients";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY! // server-only
-);
+const supabase = createSupabaseServiceRoleClient();
 const BUCKET = "book-covers";
 
 export const supabaseStore: CoverStore = {

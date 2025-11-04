@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useEffect, useMemo, useState } from "react";
 import { ThumbsUp } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
 
 type LikeButtonProps = {
   isbn13: string;
@@ -15,7 +15,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
   const [likeCount, setLikeCount] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  const supabase = createClientComponentClient();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   // 1. On mount: get current user and fetch like status + count
   useEffect(() => {
