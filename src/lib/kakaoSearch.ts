@@ -2,6 +2,32 @@
 import { splitKakaoIsbn, toIsbn13, isValidIsbn13 } from "@/lib/isbn";
 import { redis } from "@/lib/redis";
 
+export interface KakaoBookDocument {
+  authors?: string[];
+  contents?: string;
+  datetime?: string;
+  isbn?: string;
+  price?: number;
+  publisher?: string;
+  sale_price?: number;
+  status?: string;
+  thumbnail?: string;
+  title?: string;
+  translators?: string[];
+  url?: string;
+}
+
+export interface KakaoBookSearchMeta {
+  is_end: boolean;
+  pageable_count: number;
+  total_count: number;
+}
+
+export interface KakaoBookSearchResponse {
+  documents?: KakaoBookDocument[];
+  meta?: KakaoBookSearchMeta;
+}
+
 /**
  * Kakao Book Search with pagination and Redis caching.
  * @param q     Search query
@@ -15,16 +41,16 @@ export async function kakaoSearch(q: string, page: number = 1, size: number = 30
 
   // Redis cache key includes page & size
   const key = `search:${q}:${clampedPage}:${clampedSize}`;
-  const cached = await redis.get(key);
+  const cached = await redis.get<string | KakaoBookSearchResponse>(key);
   if (cached) {
     if (typeof cached === "string") {
       try {
-        return JSON.parse(cached);
+        return JSON.parse(cached) as KakaoBookSearchResponse;
       } catch {
         // fall through to bypass corrupted cache entries
       }
     } else {
-      return cached as any;
+      return cached;
     }
   }
 
@@ -40,10 +66,10 @@ export async function kakaoSearch(q: string, page: number = 1, size: number = 30
   });
   if (!res.ok) throw new Error(`kakao ${res.status}`);
 
-  const data = await res.json();
+  const data = (await res.json()) as KakaoBookSearchResponse;
 
-  const documents = (data.documents || []).map((d: any) => {
-    const { isbn10, isbn13 } = splitKakaoIsbn(d.isbn);
+  const documents = (data.documents ?? []).map(doc => {
+    const { isbn10, isbn13 } = splitKakaoIsbn(doc.isbn);
     const chosen13 =
       isbn13 && isValidIsbn13(isbn13)
         ? isbn13
@@ -54,17 +80,21 @@ export async function kakaoSearch(q: string, page: number = 1, size: number = 30
     return {
       isbn13: chosen13,
       isbn10: isbn10 ?? null,
-      title: d.title ?? null,
-      authors: d.authors ?? null,
-      publisher: d.publisher ?? null,
-      thumbnail: d.thumbnail ?? null,
-      datetime: d.datetime ?? null,
+      title: doc.title ?? null,
+      authors: doc.authors ?? null,
+      publisher: doc.publisher ?? null,
+      thumbnail: doc.thumbnail ?? null,
+      datetime: doc.datetime ?? null,
     };
   });
 
   const result = {
     documents,
-    meta: data.meta ?? { is_end: true, pageable_count: documents.length, total_count: documents.length },
+    meta: data.meta ?? {
+      is_end: true,
+      pageable_count: documents.length,
+      total_count: documents.length,
+    },
   };
 
   // Cache for 5 minutes

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
+import type { KakaoBookSearchResponse } from "@/lib/kakaoSearch";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -23,13 +24,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "kakao error", status: res.status }, { status: 502 });
   }
 
-  const data = await res.json();
-  const docs = (data?.documents ?? []).map((d: any) => ({
-    isbn13: d.isbn?.split(" ").pop() ?? "",
-    title: d.title ?? null,
-    authors: d.authors ?? [],
-    publisher: d.publisher ?? null,
-    thumbnail: d.thumbnail ?? null,
+  const data = (await res.json()) as KakaoBookSearchResponse;
+  const documents = data?.documents ?? [];
+  const docs = documents.map(doc => ({
+    isbn13: doc.isbn?.split(" ").pop() ?? "",
+    title: doc.title ?? null,
+    authors: doc.authors ?? [],
+    publisher: doc.publisher ?? null,
+    thumbnail: doc.thumbnail ?? null,
   }));
 
   // Cache for 1 hour
