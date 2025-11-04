@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="border-t">
       <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
         <div className="text-center sm:text-left">
-          <div>아직 다듬는 중이에요. 의견을 보내주세요!</div>
+          <div>🚧 아직 다듬는 중이에요. 의견을 보내주세요!</div>
           <div>© {year} 책판 (kbooks). All rights reserved.</div>
         </div>
         <div className="flex gap-4">

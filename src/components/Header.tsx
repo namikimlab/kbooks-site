@@ -1,6 +1,5 @@
 // components/Header.tsx  ← server component (no "use client")
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import AuthArea from "./AuthArea.client"; // 👈 new client-only part
 
 export default function Header() {

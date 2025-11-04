@@ -16,7 +16,17 @@ export async function kakaoSearch(q: string, page: number = 1, size: number = 30
   // Redis cache key includes page & size
   const key = `search:${q}:${clampedPage}:${clampedSize}`;
   const cached = await redis.get(key);
-  if (cached) return cached as any;
+  if (cached) {
+    if (typeof cached === "string") {
+      try {
+        return JSON.parse(cached);
+      } catch {
+        // fall through to bypass corrupted cache entries
+      }
+    } else {
+      return cached as any;
+    }
+  }
 
   const apiKey = process.env.KAKAO_REST_API_KEY!;
   const url = new URL("https://dapi.kakao.com/v3/search/book");
