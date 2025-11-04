@@ -17,13 +17,13 @@ export default async function BookDetailPage({
 
   if (!kb) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
+      <section className="mx-auto max-w-xl px-4 py-16 text-center">
         <div className="mx-auto mb-6 aspect-[2/3] w-40 rounded-xl bg-muted" />
         <div className="text-base font-medium text-foreground">책 정보를 찾을 수 없어요</div>
         <div className="mt-2 text-sm text-muted-foreground">
           요청한 ISBN: <span className="font-mono text-foreground">{isbn13}</span>
         </div>
-      </main>
+      </section>
     );
   }
 
@@ -36,7 +36,7 @@ export default async function BookDetailPage({
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
         {/* LEFT: cover */}
         <div className="flex justify-center md:block">
@@ -64,6 +64,6 @@ export default async function BookDetailPage({
           </p>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

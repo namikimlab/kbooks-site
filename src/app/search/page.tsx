@@ -23,9 +23,9 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (!query) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-xl font-semibold">검색어를 입력하세요</h1>
-      </main>
+      </section>
     );
   }
 
@@ -36,7 +36,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const totalPages = Math.min(50, Math.ceil(totalCount / pageSize)); // Kakao limit
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <section className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-xl font-semibold">검색 결과</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         쿼리: “{query}” · {totalCount}건
@@ -119,6 +119,6 @@ export default async function SearchPage({ searchParams }: Props) {
           </div>
         </>
       )}
-    </main>
+    </section>
   );
 }
