@@ -1,6 +1,6 @@
 // lib/storage.supabase.ts
 import type { CoverStore } from "./storage";
-import { createSupabaseServiceRoleClient } from "./supabaseClients";
+import { createSupabaseServiceRoleClient } from "./supabaseServiceRoleClient";
 
 const supabase = createSupabaseServiceRoleClient();
 const BUCKET = "book-covers";

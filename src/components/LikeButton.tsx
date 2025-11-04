@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ThumbsUp } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 
 type LikeButtonProps = {
   isbn13: string;

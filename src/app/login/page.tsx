@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 
 export default function LoginPage() {
   // local state for the email input and status message

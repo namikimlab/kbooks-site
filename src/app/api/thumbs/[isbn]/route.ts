@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
-import { createSupabaseServiceRoleClient } from "@/lib/supabaseClients";
+import { createSupabaseServiceRoleClient } from "@/lib/supabaseServiceRoleClient";
 
 // --- assumptions (adjust if your key scheme differs) ---
 // - Large image in Supabase bucket at: book-covers/{isbn}.jpg

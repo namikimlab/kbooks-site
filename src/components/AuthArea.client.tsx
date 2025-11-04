@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClients";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 
 export default function AuthArea() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);

@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { createSupabaseServiceRoleClient } from "@/lib/supabaseClients";
+import { createSupabaseServiceRoleClient } from "@/lib/supabaseServiceRoleClient";
 
 const BUCKET = "book-covers";
 const supabase = createSupabaseServiceRoleClient();
