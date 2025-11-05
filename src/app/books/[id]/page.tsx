@@ -1,21 +1,116 @@
 // app/books/[id]/page.tsx
-import LikeButton from "@/components/LikeButton";
-import { kakaoLookupByIsbn } from "@/lib/kakaoSearch";
 import CoverImage from "@/components/CoverImage";
+import LikeButton from "@/components/LikeButton";
+import {
+  BookRow,
+  ensureBookStub,
+  getBookByIsbn13,
+  needsKakaoEnrichment,
+  shouldFetchKyoboCategory,
+} from "@/lib/books";
+import { headers } from "next/headers";
 
 export const revalidate = 3600; // ISR 1h
+
+type DisplayBook = {
+  title: string | null;
+  authors: string[];
+  publisher: string | null;
+  publishYear: number | null;
+  description: string | null;
+  category: string[] | null;
+  kyoboUrl: string | null;
+};
+
+function authorsToList(author: string | null) {
+  if (!author) return [];
+  return author
+    .split(",")
+    .map(part => part.trim())
+    .filter(Boolean);
+}
+
+function toDisplay(book: BookRow | null): DisplayBook {
+  const publishYear =
+    book?.publish_date && !Number.isNaN(Date.parse(book.publish_date))
+      ? new Date(book.publish_date).getFullYear()
+      : null;
+
+  return {
+    title: book?.title ?? null,
+    authors: authorsToList(book?.author ?? null),
+    publisher: book?.publisher ?? null,
+    publishYear,
+    description: book?.description ?? null,
+    category: book?.category ?? null,
+    kyoboUrl: book?.kyobo_url ?? null,
+  };
+}
+
+function getBaseUrl() {
+  const h = headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  if (host) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
+
+function triggerKyoboCategoryFetch(baseUrl: string, isbn13: string) {
+  fetch(`${baseUrl}/api/fetch-kyobo-category?isbn=${encodeURIComponent(isbn13)}`, {
+    cache: "no-store",
+  }).catch(err => {
+    console.error(`[book-detail] kyobo trigger failed for ${isbn13}:`, err);
+  });
+}
 
 export default async function BookDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>; // Next 15
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params; // await required
+  const { id } = await params;
   const isbn13 = id;
 
-  const kb = await kakaoLookupByIsbn(isbn13);
+  const baseUrl = getBaseUrl();
 
-  if (!kb) {
+  let book = await getBookByIsbn13(isbn13);
+  if (!book) {
+    book = await ensureBookStub(isbn13);
+  }
+
+  if (needsKakaoEnrichment(book)) {
+    try {
+      const kakaoRes = await fetch(
+        `${baseUrl}/api/fetch-kakao?isbn=${encodeURIComponent(isbn13)}`,
+        { cache: "no-store" }
+      );
+      if (kakaoRes.ok) {
+        const payload = await kakaoRes.json();
+        if (payload?.book) {
+          book = payload.book as BookRow;
+        } else {
+          book = await getBookByIsbn13(isbn13);
+        }
+      } else {
+        console.error(`[book-detail] kakao fetch failed: ${kakaoRes.status}`);
+      }
+    } catch (err) {
+      console.error(`[book-detail] kakao fetch error for ${isbn13}:`, err);
+    }
+  }
+
+  if (shouldFetchKyoboCategory(book)) {
+    triggerKyoboCategoryFetch(baseUrl, isbn13);
+  }
+
+  const display = toDisplay(book);
+  const hasPrimaryData =
+    !!display.title ||
+    display.authors.length > 0 ||
+    !!display.publisher ||
+    !!(display.description && display.description.trim().length > 0);
+
+  if (!hasPrimaryData) {
     return (
       <section className="mx-auto max-w-xl px-4 py-16 text-center">
         <div className="mx-auto mb-6 aspect-[2/3] w-40 rounded-xl bg-muted" />
@@ -27,41 +122,49 @@ export default async function BookDetailPage({
     );
   }
 
-  const { title, authors, publisher, datetime, contents } = kb;
-
-  let year: number | null = null;
-  if (datetime) {
-    const t = Date.parse(datetime);
-    if (!Number.isNaN(t)) year = new Date(t).getFullYear();
-  }
-
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
-        {/* LEFT: cover */}
         <div className="flex justify-center md:block">
           <div className="w-full max-w-[360px]">
-            <CoverImage isbn13={isbn13} alt={title ?? "책 표지"} />
+            <CoverImage isbn13={isbn13} alt={display.title ?? "책 표지"} />
           </div>
         </div>
 
-        {/* RIGHT: meta */}
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
           <h1 className="text-2xl md:text-3xl font-semibold leading-snug tracking-tight line-clamp-3 break-words">
-            {title ?? "제목 정보 없음"}
+            {display.title ?? "제목 정보 없음"}
           </h1>
           <div className="mt-2 text-base text-muted-foreground leading-snug">
-            {authors?.length ? authors.join(", ") : "저자 정보 없음"}
+            {display.authors.length ? display.authors.join(", ") : "저자 정보 없음"}
           </div>
           <div className="mt-1 text-sm text-muted-foreground leading-snug">
-            {(publisher ?? "출판사 정보 없음")}{year ? ` · ${year}` : ""}
+            {(display.publisher ?? "출판사 정보 없음")}
+            {display.publishYear ? ` · ${display.publishYear}` : ""}
           </div>
           <div className="mt-3">
             <LikeButton isbn13={isbn13} />
           </div>
           <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
-            {contents?.trim() ? contents : "소개 정보가 아직 없습니다."}
+            {display.description?.trim() ? display.description : "소개 정보가 아직 없습니다."}
           </p>
+
+          {display.category && display.category.length > 0 ? (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {display.category.map(cat => (
+                <span
+                  key={cat}
+                  className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 text-sm text-muted-foreground">
+              🚧 태그 수집 중이에요. 잠시 후 새로고침 해보세요.
+            </div>
+          )}
         </div>
       </section>
     </section>

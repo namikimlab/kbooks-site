@@ -38,3 +38,13 @@ export function toIsbn13(isbn10: string) {
   const check = (10 - (sum % 10)) % 10;
   return base + String(check);
 }
+
+export function normalizeToIsbn13(raw: string) {
+  const compact = onlyDigits(raw);
+  if (compact.length === 13 && isValidIsbn13(compact)) return compact;
+  if (compact.length === 10 && isValidIsbn10(compact)) {
+    const converted = toIsbn13(compact);
+    return isValidIsbn13(converted) ? converted : null;
+  }
+  return null;
+}
