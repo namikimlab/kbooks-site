@@ -49,8 +49,9 @@ export default async function SearchPage({ searchParams }: Props) {
       ) : (
         <>
           <ul className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7">
-            {documents.map((b: Book) => {
+            {documents.map((b: Book, index: number) => {
               const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
+              const isAboveFoldCandidate = index < 4; // Preload images likely visible on initial viewport
               return (
                 <li key={b.isbn13}>
                   <Card className="overflow-hidden transition hover:shadow-sm">
@@ -67,7 +68,7 @@ export default async function SearchPage({ searchParams }: Props) {
                               sizes="120px"
                               className="rounded-md object-cover bg-muted"
                               decoding="async"
-                              loading="lazy"
+                              priority={isAboveFoldCandidate}
                             />
                           ) : (
                             <div className="w-[120px] h-[174px] rounded-md bg-muted" />
