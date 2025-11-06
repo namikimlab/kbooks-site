@@ -18,12 +18,26 @@ function extractPayload(raw: unknown): Record<string, unknown> | null {
   return obj;
 }
 
+type BreadcrumbEntry = string | { text?: string; title?: string; name?: string };
+
 function sanitizeStringArray(value: unknown) {
   if (!Array.isArray(value)) return null;
   const cleaned = Array.from(
     new Set(
       value
-        .map(item => (typeof item === "string" ? item.trim() : ""))
+        .map(item => {
+          if (typeof item === "string") return item.trim();
+          if (item && typeof item === "object") {
+            const entry = item as BreadcrumbEntry;
+            return (
+              entry.text?.trim() ||
+              entry.title?.trim() ||
+              entry.name?.trim() ||
+              ""
+            );
+          }
+          return "";
+        })
         .filter((item: string) => item.length > 0)
     )
   );
@@ -83,15 +97,30 @@ export async function POST(req: Request) {
       ? (payload["kyobo_url"] as string)
       : typeof payload["kyoboUrl"] === "string"
       ? (payload["kyoboUrl"] as string)
+      : typeof payload["url"] === "string"
+      ? (payload["url"] as string)
       : null;
 
   const categories =
     sanitizeStringArray(payload["breadcrumbs"]) ??
     sanitizeStringArray(payload["breadcrumb"]) ??
+    sanitizeStringArray(payload["categoryPath"]) ??
     sanitizeStringArray(payload["category"]) ??
     sanitizeStringArray(payload["categories"]);
 
-  const scrapedAtRaw = payload["scraped_at"] ?? payload["scrapedAt"] ?? null;
+  console.log(
+    "[apify-kyobo-callback] normalized categories",
+    categories,
+    "kyoboUrl",
+    kyoboUrl
+  );
+
+  const scrapedAtRaw =
+    payload["scraped_at"] ??
+    payload["scrapedAt"] ??
+    payload["last_updated"] ??
+    payload["lastUpdated"] ??
+    null;
   const scrapedAt =
     typeof scrapedAtRaw === "string" && !Number.isNaN(Date.parse(scrapedAtRaw))
       ? new Date(scrapedAtRaw).toISOString()

@@ -47,8 +47,8 @@ function toDisplay(book: BookRow | null): DisplayBook {
   };
 }
 
-function getBaseUrl() {
-  const h = headers();
+async function getBaseUrl() {
+  const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
   if (host) return `${proto}://${host}`;
@@ -71,7 +71,7 @@ export default async function BookDetailPage({
   const { id } = await params;
   const isbn13 = id;
 
-  const baseUrl = getBaseUrl();
+  const baseUrl = await getBaseUrl();
 
   let book = await getBookByIsbn13(isbn13);
   if (!book) {

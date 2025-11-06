@@ -89,21 +89,22 @@ export async function upsertKakaoBook(isbn13: string, payload: KakaoBookUpsertPa
 }
 
 export async function updateKyoboCategory(isbn13: string, payload: KyoboCategoryPayload) {
-  const { data, error } = await supabase
-    .from("books")
-    .upsert(
-      {
-        isbn13,
-        kyobo_url: payload.kyoboUrl,
-        category: payload.categories,
-        kyobo_fetched_at: nowIso(),
-        updated_at: nowIso(),
-      },
-      { onConflict: "isbn13" }
-    )
-    .select()
-    .single<BookRow>();
+  const updatePayload: Record<string, unknown> = {
+    isbn13,
+    updated_at: nowIso(),
+  };
 
+  if (payload.kyoboUrl) updatePayload.kyobo_url = payload.kyoboUrl;
+  if (payload.categories && payload.categories.length > 0) {
+    updatePayload.category = payload.categories;
+    updatePayload.kyobo_fetched_at = nowIso();
+  }
+
+  const query = supabase.from("books").upsert(updatePayload, {
+    onConflict: "isbn13",
+  });
+
+  const { data, error } = await query.select().single<BookRow>();
   if (error) throw error;
   return data;
 }
@@ -142,9 +143,11 @@ export function needsKakaoEnrichment(book: BookRow | null) {
 
 export function shouldFetchKyoboCategory(book: BookRow | null, now = Date.now()) {
   if (!book) return true;
-  if (book.category && book.category.length > 0) return false;
 
-  if (!book.kyobo_fetched_at) return true;
+  const noCategory = !book.category || book.category.length === 0;
+  const noFetchedAt = !book.kyobo_fetched_at;
+  
+  if (noCategory || noFetchedAt) return true;
 
   const fetchedAt = Date.parse(book.kyobo_fetched_at);
   if (Number.isNaN(fetchedAt)) return true;
