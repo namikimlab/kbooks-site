@@ -12,9 +12,10 @@ const serverOptions = {
   },
 } as const;
 
-export function createSupabaseServerClient() {
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerComponentClient({
-    cookies,
+    cookies: () => cookieStore,
     options: serverOptions,
   });
 }
