@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { normalizeToIsbn13 } from "@/lib/isbn";
 import { updateKyoboCategory, upsertKyoboRawPayload } from "@/lib/books";
 import { revalidateTag } from "next/cache";
+import { getOptionalServerEnv } from "@/lib/env";
 
 export const runtime = "nodejs";
 
-const WEBHOOK_SECRET = process.env.KBOOKS_WEBHOOK_SECRET ?? "";
-const APIFY_TOKEN = process.env.APIFY_TOKEN ?? "";
+const WEBHOOK_SECRET = getOptionalServerEnv("KBOOKS_WEBHOOK_SECRET") ?? "";
+const APIFY_TOKEN = getOptionalServerEnv("APIFY_TOKEN") ?? "";
 
 type DatasetItem = Record<string, unknown>;
 type BreadcrumbEntry = string | { text?: string; title?: string; name?: string };

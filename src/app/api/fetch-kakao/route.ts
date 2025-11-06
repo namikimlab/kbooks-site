@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
-import {
-  BookRow,
-  KakaoBookUpsertPayload,
-  getBookByIsbn13,
-  upsertKakaoBook,
-} from "@/lib/books";
+import { BookRow, KakaoBookUpsertPayload, getBookByIsbn13, upsertKakaoBook } from "@/lib/books";
 import { normalizeToIsbn13 } from "@/lib/isbn";
+import { getOptionalServerEnv } from "@/lib/env";
 
 const TTL_SECONDS = 60 * 60 * 24;
 const FETCH_TIMEOUT_MS = 5000;
@@ -54,6 +50,12 @@ function normalizeKakaoDoc(doc: unknown): NormalizedKakao | null {
 }
 
 async function fetchFromKakao(isbn13: string) {
+  const apiKey = getOptionalServerEnv("KAKAO_REST_API_KEY");
+  if (!apiKey) {
+    console.error("[fetch-kakao] Missing KAKAO_REST_API_KEY");
+    return null;
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -62,7 +64,7 @@ async function fetchFromKakao(isbn13: string) {
       isbn13
     )}&size=1`;
     const res = await fetch(url, {
-      headers: { Authorization: `KakaoAK ${process.env.KAKAO_REST_API_KEY}` },
+      headers: { Authorization: `KakaoAK ${apiKey}` },
       cache: "no-store",
       signal: controller.signal,
     });

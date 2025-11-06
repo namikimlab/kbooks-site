@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
-import {
-  BookRow,
-  ensureBookStub,
-  getBookByIsbn13,
-  markKyoboFetchAttempt,
-  shouldFetchKyoboCategory,
-  upsertKyoboUrlOnly,
-} from "@/lib/books";
+import { BookRow, ensureBookStub, getBookByIsbn13, markKyoboFetchAttempt, shouldFetchKyoboCategory, upsertKyoboUrlOnly } from "@/lib/books";
 import { normalizeToIsbn13 } from "@/lib/isbn";
 import { getKyoboProductUrlFromIsbn } from "@/utils/kyobo";
+import { getOptionalServerEnv } from "@/lib/env";
 
 const KYOOBO_RESOLVE_TIMEOUT_MS = 4000;
-const APIFY_TOKEN = process.env.APIFY_TOKEN!;
-const APIFY_TASK_ID = process.env.APIFY_TASK_ID!; 
-const WEBHOOK_SECRET = process.env.KBOOKS_WEBHOOK_SECRET!;
+
+type ApifyConfig = {
+  token: string;
+  taskId: string;
+  webhookSecret: string;
+};
 
 async function fetchWithTimeout(url: string, method: "GET" | "HEAD") {
   const controller = new AbortController();
@@ -43,13 +40,13 @@ async function resolveKyoboUrl(isbn13: string, current: string | null) {
 /**
  * Runs the Apify Task directly, overriding startUrls in its input.
  */
-async function triggerApifyTask(isbn13: string, startUrl: string) {
-  const endpoint = `https://api.apify.com/v2/actor-tasks/${APIFY_TASK_ID}/runs?token=${APIFY_TOKEN}`;
+async function triggerApifyTask(isbn13: string, startUrl: string, config: ApifyConfig) {
+  const endpoint = `https://api.apify.com/v2/actor-tasks/${config.taskId}/runs?token=${config.token}`;
 
   const overrides = {
     startUrls: [{ url: startUrl }],
     isbn13,
-    webhook_secret: WEBHOOK_SECRET,
+    webhook_secret: config.webhookSecret,
   };
 
   console.log("[fetch-kyobo-category] Triggering Apify Task with override:", {
@@ -72,6 +69,22 @@ async function triggerApifyTask(isbn13: string, startUrl: string) {
 }
 
 export async function GET(req: Request) {
+  const apifyConfig = (() => {
+    const token = getOptionalServerEnv("APIFY_TOKEN");
+    const taskId = getOptionalServerEnv("APIFY_TASK_ID");
+    const webhookSecret = getOptionalServerEnv("KBOOKS_WEBHOOK_SECRET");
+
+    if (!token || !taskId || !webhookSecret) {
+      console.warn("[fetch-kyobo-category] Apify integration disabled: missing env", {
+        token: Boolean(token),
+        taskId: Boolean(taskId),
+        webhookSecret: Boolean(webhookSecret),
+      });
+      return null;
+    }
+    return { token, taskId, webhookSecret };
+  })();
+
   const { searchParams } = new URL(req.url);
   const rawIsbn = searchParams.get("isbn") ?? "";
   const isbn13 = normalizeToIsbn13(rawIsbn);
@@ -101,8 +114,15 @@ export async function GET(req: Request) {
   if (kyoboUrl && kyoboUrl !== book?.kyobo_url)
     await upsertKyoboUrlOnly(isbn13, kyoboUrl).catch(console.error);
 
+  if (!apifyConfig) {
+    return NextResponse.json(
+      { status: "skipped", reason: "apify-disabled" },
+      { status: 202 },
+    );
+  }
+
   try {
-    const apifyRes = await triggerApifyTask(isbn13, kyoboUrl);
+    const apifyRes = await triggerApifyTask(isbn13, kyoboUrl, apifyConfig);
     console.log("[fetch-kyobo-category] Task queued:", {
       isbn13,
       kyoboUrl,

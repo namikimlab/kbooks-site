@@ -24,53 +24,82 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
     async function init() {
       setLoading(true);
 
-      // get the logged-in user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (ignore) return;
-
-      if (user) {
-        setUserId(user.id);
-
-        // did THIS user already like this book?
-        const { data: existingLike, error: likeErr } = await supabase
-          .from("book_likes")
-          .select("user_id")
-          .eq("user_id", user.id)
-          .eq("isbn13", isbn13)
-          .maybeSingle();
+      try {
+        const {
+          data: sessionData,
+          error: sessionErr,
+        } = await supabase.auth.getSession();
 
         if (ignore) return;
 
-        if (!likeErr && existingLike) {
-          setLiked(true);
-        } else if (!likeErr) {
+        if (sessionErr) {
+          console.error("failed to fetch auth session:", sessionErr);
+        }
+
+        const user = sessionData?.session?.user ?? null;
+
+        if (user) {
+          setUserId(user.id);
+
+          try {
+            const { data: existingLike, error: likeErr } = await supabase
+              .from("book_likes")
+              .select("user_id")
+              .eq("user_id", user.id)
+              .eq("isbn13", isbn13)
+              .maybeSingle();
+
+            if (ignore) return;
+
+            if (!likeErr && existingLike) {
+              setLiked(true);
+            } else if (!likeErr) {
+              setLiked(false);
+            } else {
+              console.error("failed to check like status:", likeErr);
+            }
+          } catch (err) {
+            if (!ignore) console.error("like lookup failed:", err);
+          }
+        } else {
+          // not logged in
+          setUserId(null);
           setLiked(false);
         }
-      } else {
-        // not logged in
-        setUserId(null);
-        setLiked(false);
-      }
 
-      // get total like count (public aggregate; RLS shouldn't block counting)
-      const { count, error: countErr } = await supabase
-        .from("book_likes")
-        .select("isbn13", { count: "exact", head: true })
-        .eq("isbn13", isbn13);
+        try {
+          const { count, error: countErr } = await supabase
+            .from("book_likes")
+            .select("isbn13", { count: "exact", head: true })
+            .eq("isbn13", isbn13);
 
-      if (ignore) return;
+          if (ignore) return;
 
-      if (!countErr && typeof count === "number") {
-        setLikeCount(count);
-      } else {
-        setLikeCount(null);
-      }
-
-      if (!ignore) {
-        setLoading(false);
+          if (!countErr && typeof count === "number") {
+            setLikeCount(count);
+          } else if (countErr) {
+            console.error("failed to fetch like count:", countErr);
+            setLikeCount(null);
+          } else {
+            setLikeCount(null);
+          }
+        } catch (err) {
+          if (!ignore) {
+            console.error("like count fetch failed:", err);
+            setLikeCount(null);
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error(`LikeButton init failed for ${isbn13}:`, err);
+          setUserId(null);
+          setLiked(false);
+          setLikeCount(null);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
@@ -99,22 +128,27 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
         .eq("user_id", userId)
         .eq("isbn13", isbn13);
 
-      if (delErr) console.error("unlike failed:", delErr);
-      else {
+      if (delErr) {
+        console.error("unlike failed:", delErr);
+      } else {
         setLiked(false);
-        setLikeCount((n) => (n !== null ? n - 1 : n));
+        setLikeCount(n => {
+          if (n === null) return n;
+          return Math.max(0, n - 1);
+        });
       }
     } else {
-       // like (insert row)
+      // like (insert row)
       const { error: insErr } = await supabase.from("book_likes").insert({
         user_id: userId,
-        isbn13
+        isbn13,
       });
 
-      if (insErr) console.error("like failed:", insErr);
-      else{
+      if (insErr) {
+        console.error("like failed:", insErr);
+      } else {
         setLiked(true);
-        setLikeCount((n) => (n !== null ? n + 1 : 1));
+        setLikeCount(n => (n !== null ? n + 1 : 1));
       }
     }
 

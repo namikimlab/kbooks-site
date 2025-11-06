@@ -1,6 +1,7 @@
 // lib/kakaoSearch.ts  (server-only)
 import { splitKakaoIsbn, toIsbn13, isValidIsbn13 } from "@/lib/isbn";
 import { redis } from "@/lib/redis";
+import { getOptionalServerEnv } from "@/lib/env";
 
 export interface KakaoBookDocument {
   authors?: string[];
@@ -54,7 +55,10 @@ export async function kakaoSearch(q: string, page: number = 1, size: number = 30
     }
   }
 
-  const apiKey = process.env.KAKAO_REST_API_KEY!;
+  const apiKey = getOptionalServerEnv("KAKAO_REST_API_KEY");
+  if (!apiKey) {
+    throw new Error("Missing KAKAO_REST_API_KEY");
+  }
   const url = new URL("https://dapi.kakao.com/v3/search/book");
   url.searchParams.set("query", q);
   url.searchParams.set("page", String(clampedPage));
@@ -112,8 +116,13 @@ export async function kakaoLookupByIsbn(isbn: string) {
   url.searchParams.set("query", isbn);
   url.searchParams.set("size", "1");
 
+  const apiKey = getOptionalServerEnv("KAKAO_REST_API_KEY");
+  if (!apiKey) {
+    throw new Error("Missing KAKAO_REST_API_KEY");
+  }
+
   const res = await fetch(url.toString(), {
-    headers: { Authorization: `KakaoAK ${process.env.KAKAO_REST_API_KEY}` },
+    headers: { Authorization: `KakaoAK ${apiKey}` },
     next: { revalidate: 3600 },
   });
   if (!res.ok) throw new Error(`Kakao error: ${res.status}`);

@@ -8,6 +8,8 @@ import {
   needsKakaoEnrichment,
   shouldFetchKyoboCategory,
 } from "@/lib/books";
+import { normalizeToIsbn13 } from "@/lib/isbn";
+import { getSiteBaseUrl } from "@/lib/env";
 import { headers } from "next/headers";
 
 export const revalidate = 3600; // ISR 1h
@@ -47,16 +49,22 @@ function toDisplay(book: BookRow | null): DisplayBook {
   };
 }
 
-async function getBaseUrl() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
-  if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+async function resolveBaseUrl() {
+  try {
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    if (host) {
+      const proto = h.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
+      return `${proto}://${host}`;
+    }
+  } catch {
+    // headers() can throw during static generation; fall through to env fallback
+  }
+  return getSiteBaseUrl();
 }
 
 function triggerKyoboCategoryFetch(baseUrl: string, isbn13: string) {
-  fetch(`${baseUrl}/api/fetch-kyobo-category?isbn=${encodeURIComponent(isbn13)}`, {
+  void fetch(`${baseUrl}/api/fetch-kyobo-category?isbn=${encodeURIComponent(isbn13)}`, {
     cache: "no-store",
   }).catch(err => {
     console.error(`[book-detail] kyobo trigger failed for ${isbn13}:`, err);
@@ -69,13 +77,49 @@ export default async function BookDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const isbn13 = id;
+  const normalizedIsbn = normalizeToIsbn13(id);
 
-  const baseUrl = await getBaseUrl();
+  if (!normalizedIsbn) {
+    return (
+      <section className="mx-auto max-w-xl px-4 py-16 text-center">
+        <div className="mx-auto mb-6 aspect-[2/3] w-40 rounded-xl bg-muted" />
+        <div className="text-base font-medium text-foreground">유효한 ISBN이 아니에요</div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          요청한 값: <span className="font-mono text-foreground break-all">{id}</span>
+        </div>
+      </section>
+    );
+  }
 
-  let book = await getBookByIsbn13(isbn13);
+  const isbn13 = normalizedIsbn;
+
+  const baseUrl = await resolveBaseUrl();
+
+  let book: BookRow | null = null;
+  try {
+    book = await getBookByIsbn13(isbn13);
+  } catch (err) {
+    console.error(`[book-detail] supabase read failed for ${isbn13}:`, err);
+  }
+
   if (!book) {
-    book = await ensureBookStub(isbn13);
+    try {
+      book = await ensureBookStub(isbn13);
+    } catch (err) {
+      console.error(`[book-detail] supabase stub insert failed for ${isbn13}:`, err);
+    }
+  }
+
+  if (!book) {
+    return (
+      <section className="mx-auto max-w-xl px-4 py-16 text-center">
+        <div className="mx-auto mb-6 aspect-[2/3] w-40 rounded-xl bg-muted" />
+        <div className="text-base font-medium text-foreground">책 정보를 불러오지 못했어요</div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          잠시 후 다시 시도해주세요. 문제가 계속되면 관리자에게 문의해주세요.
+        </div>
+      </section>
+    );
   }
 
   if (needsKakaoEnrichment(book)) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 import type { KakaoBookSearchResponse } from "@/lib/kakaoSearch";
+import { getOptionalServerEnv } from "@/lib/env";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -11,7 +12,12 @@ export async function GET(req: Request) {
   const cached = await redis.get(cacheKey);
   if (cached) return NextResponse.json(cached);
 
-  const apiKey = process.env.KAKAO_REST_API_KEY!;
+  const apiKey = getOptionalServerEnv("KAKAO_REST_API_KEY");
+  if (!apiKey) {
+    console.error("[api/kakao/search] Missing KAKAO_REST_API_KEY");
+    return NextResponse.json({ error: "kakao api key missing" }, { status: 503 });
+  }
+
   const url = `https://dapi.kakao.com/v3/search/book?query=${encodeURIComponent(q)}&size=30`;
   const res = await fetch(url, {
     headers: { Authorization: `KakaoAK ${apiKey}` },
