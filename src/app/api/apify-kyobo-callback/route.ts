@@ -4,50 +4,111 @@ import { normalizeToIsbn13 } from "@/lib/isbn";
 import { updateKyoboCategory, upsertKyoboRawPayload } from "@/lib/books";
 import { revalidateTag } from "next/cache";
 
-export const runtime = "nodejs"; // ensures env vars work properly
+export const runtime = "nodejs";
 
 const WEBHOOK_SECRET = process.env.KBOOKS_WEBHOOK_SECRET ?? "";
+const APIFY_TOKEN = process.env.APIFY_TOKEN ?? "";
 
-function extractPayload(raw: unknown): Record<string, unknown> | null {
-  if (!raw || typeof raw !== "object") return null;
-  const obj = raw as Record<string, unknown>;
-  // recursively unwrap nested payload/data/resource structures
-  if (obj.payload) return extractPayload(obj.payload);
-  if (obj.data) return extractPayload(obj.data);
-  if (obj.resource) return extractPayload(obj.resource);
-  return obj;
-}
-
+type DatasetItem = Record<string, unknown>;
 type BreadcrumbEntry = string | { text?: string; title?: string; name?: string };
 
-function sanitizeStringArray(value: unknown) {
+function sanitizeCategories(value: unknown) {
   if (!Array.isArray(value)) return null;
-  const cleaned = Array.from(
-    new Set(
-      value
-        .map(item => {
-          if (typeof item === "string") return item.trim();
-          if (item && typeof item === "object") {
-            const entry = item as BreadcrumbEntry;
-            return (
-              entry.text?.trim() ||
-              entry.title?.trim() ||
-              entry.name?.trim() ||
-              ""
-            );
-          }
-          return "";
-        })
-        .filter((item: string) => item.length > 0)
-    )
-  );
-  return cleaned.length > 0 ? cleaned : null;
+  const unique = new Set<string>();
+  for (const entry of value) {
+    if (typeof entry === "string") {
+      const trimmed = entry.trim();
+      if (trimmed) unique.add(trimmed);
+      continue;
+    }
+    if (entry && typeof entry === "object") {
+      const item = entry as BreadcrumbEntry;
+      const maybe =
+        item.text?.trim() ?? item.title?.trim() ?? item.name?.trim() ?? "";
+      if (maybe) unique.add(maybe);
+    }
+  }
+  return unique.size ? Array.from(unique) : null;
+}
+
+function toIso(value: unknown) {
+  if (typeof value !== "string") return null;
+  const ts = Date.parse(value);
+  if (Number.isNaN(ts)) return null;
+  return new Date(ts).toISOString();
+}
+
+function isTemplate(value: string | undefined | null) {
+  if (!value) return false;
+  return value.startsWith("{{") && value.endsWith("}}");
+}
+
+async function fetchFirstDatasetItem(datasetId: string) {
+  if (!datasetId) return null;
+
+  if (!APIFY_TOKEN) {
+    console.error("[apify-kyobo-callback] Missing APIFY_TOKEN for dataset fetch", { datasetId });
+    return null;
+  }
+
+  const url = new URL(`https://api.apify.com/v2/datasets/${datasetId}/items`);
+  url.searchParams.set("clean", "true");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("token", APIFY_TOKEN);
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(
+        `[apify-kyobo-callback] Dataset fetch failed ${datasetId}: ${res.status} ${text}`
+      );
+      return null;
+    }
+
+    const data = (await res.json()) as unknown;
+    if (!Array.isArray(data) || data.length === 0 || typeof data[0] !== "object") {
+      console.warn("[apify-kyobo-callback] Dataset empty or invalid", { datasetId });
+      return null;
+    }
+    return data[0] as DatasetItem;
+  } catch (err) {
+    console.error(`[apify-kyobo-callback] Dataset fetch exception ${datasetId}:`, err);
+    return null;
+  }
+}
+
+async function fetchRun(runId: string) {
+  if (!runId) return null;
+  if (!APIFY_TOKEN) {
+    console.error("[apify-kyobo-callback] Missing APIFY_TOKEN for run fetch", { runId });
+    return null;
+  }
+
+  const url = new URL(`https://api.apify.com/v2/actor-runs/${runId}`);
+  url.searchParams.set("token", APIFY_TOKEN);
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(
+        `[apify-kyobo-callback] Run fetch failed ${runId}: ${res.status} ${text}`
+      );
+      return null;
+    }
+    const data = (await res.json()) as Record<string, unknown>;
+    return data;
+  } catch (err) {
+    console.error(`[apify-kyobo-callback] Run fetch exception ${runId}:`, err);
+    return null;
+  }
 }
 
 export async function POST(req: Request) {
-  // 1. Verify secret
   if (!WEBHOOK_SECRET) {
-    console.error("[apify-kyobo-callback] WEBHOOK secret missing");
+    console.error("[apify-kyobo-callback] Missing WEBHOOK secret env");
     return NextResponse.json({ error: "server misconfigured" }, { status: 500 });
   }
 
@@ -58,93 +119,121 @@ export async function POST(req: Request) {
     "";
 
   if (providedSecret !== WEBHOOK_SECRET) {
-    console.warn("[apify-kyobo-callback] Unauthorized attempt");
+    console.warn("[apify-kyobo-callback] Unauthorized webhook attempt");
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // 2. Parse JSON body
-  let parsed: unknown;
+  let payload: Record<string, unknown>;
   try {
-    parsed = await req.json();
+    payload = (await req.json()) as Record<string, unknown>;
   } catch (err) {
-    console.error("[apify-kyobo-callback] invalid JSON:", err);
+    console.error("[apify-kyobo-callback] Invalid JSON", err);
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
 
-  console.log("[apify-kyobo-callback] raw body:", JSON.stringify(parsed, null, 2));
+  console.log("[apify-kyobo-callback] raw body:", JSON.stringify(payload, null, 2));
 
-  // 3. Extract payload (handles nested resource/payload/data)
-  const payload = extractPayload(parsed);
-  if (!payload) {
-    console.error("[apify-kyobo-callback] missing payload");
-    return NextResponse.json({ error: "missing payload" }, { status: 400 });
+  const status = typeof payload.status === "string" ? payload.status : "UNKNOWN";
+  const isTemplateStatus = status.startsWith("{{") && status.endsWith("}}");
+  const isSucceeded = status.toUpperCase() === "SUCCEEDED";
+  if (!isSucceeded && !isTemplateStatus) {
+    console.log("[apify-kyobo-callback] Run not finished yet", {
+      status,
+      runId: payload.runId,
+    });
   }
 
-  // 4. Extract ISBN
-  const rawIsbnValue = payload["isbn13"] ?? payload["isbn"];
-  const rawIsbn = rawIsbnValue !== undefined ? String(rawIsbnValue) : "";
-  const isbn13 = normalizeToIsbn13(rawIsbn);
+  const runIdFromPayload =
+    typeof payload.runId === "string" && !isTemplate(payload.runId) ? payload.runId : null;
+  const runIdFromHeader = req.headers.get("x-apify-run-id");
+  const runId = runIdFromPayload && !isTemplate(runIdFromPayload) ? runIdFromPayload : runIdFromHeader;
 
-  // Apify test events don’t contain ISBN — just acknowledge them
+  let datasetId =
+    typeof payload.defaultDatasetId === "string" && !isTemplate(payload.defaultDatasetId)
+      ? payload.defaultDatasetId
+      : "";
+
+  if (!datasetId && runId) {
+    const runData = await fetchRun(runId);
+    datasetId =
+      (typeof runData?.defaultDatasetId === "string" ? runData.defaultDatasetId : "") ||
+      (typeof runData?.defaultDatasetId === "number" ? String(runData.defaultDatasetId) : "");
+    if (!datasetId) {
+      console.warn("[apify-kyobo-callback] Run lookup returned no dataset id", {
+        runId,
+        runData,
+      });
+    }
+  }
+
+  if (!datasetId) {
+    console.error("[apify-kyobo-callback] Missing dataset id", {
+      runId,
+      payload,
+    });
+    return NextResponse.json({ error: "dataset missing" }, { status: 400 });
+  }
+
+  const item = await fetchFirstDatasetItem(datasetId);
+  if (!item) {
+    return NextResponse.json(
+      { ok: true, note: "dataset empty" },
+      { status: isSucceeded ? 200 : 202 }
+    );
+  }
+
+  const rawIsbnValue = item["isbn13"] ?? item["isbn"] ?? item["ISBN13"];
+  const isbn13 = normalizeToIsbn13(typeof rawIsbnValue === "string" ? rawIsbnValue : "");
   if (!isbn13) {
-    console.log("[apify-kyobo-callback] No ISBN found (likely test event)");
-    return NextResponse.json({ ok: true, note: "Test event received" });
+    console.warn("[apify-kyobo-callback] Dataset item missing valid ISBN", {
+      datasetId,
+      runId: payload.runId,
+    });
+    return NextResponse.json({ ok: true, note: "missing isbn" }, { status: 202 });
   }
 
-  // 5. Extract optional fields
   const kyoboUrl =
-    typeof payload["kyobo_url"] === "string"
-      ? (payload["kyobo_url"] as string)
-      : typeof payload["kyoboUrl"] === "string"
-      ? (payload["kyoboUrl"] as string)
-      : typeof payload["url"] === "string"
-      ? (payload["url"] as string)
+    typeof item["kyobo_url"] === "string"
+      ? (item["kyobo_url"] as string)
+      : typeof item["kyoboUrl"] === "string"
+      ? (item["kyoboUrl"] as string)
+      : typeof item["url"] === "string"
+      ? (item["url"] as string)
       : null;
 
   const categories =
-    sanitizeStringArray(payload["breadcrumbs"]) ??
-    sanitizeStringArray(payload["breadcrumb"]) ??
-    sanitizeStringArray(payload["categoryPath"]) ??
-    sanitizeStringArray(payload["category"]) ??
-    sanitizeStringArray(payload["categories"]);
+    sanitizeCategories(item["breadcrumbs"]) ??
+    sanitizeCategories(item["breadcrumb"]) ??
+    sanitizeCategories(item["categoryPath"]) ??
+    sanitizeCategories(item["category"]) ??
+    sanitizeCategories(item["categories"]);
 
-  console.log(
-    "[apify-kyobo-callback] normalized categories",
-    categories,
-    "kyoboUrl",
-    kyoboUrl
-  );
-
-  const scrapedAtRaw =
-    payload["scraped_at"] ??
-    payload["scrapedAt"] ??
-    payload["last_updated"] ??
-    payload["lastUpdated"] ??
-    null;
   const scrapedAt =
-    typeof scrapedAtRaw === "string" && !Number.isNaN(Date.parse(scrapedAtRaw))
-      ? new Date(scrapedAtRaw).toISOString()
-      : null;
+    toIso(item["scraped_at"]) ??
+    toIso(item["scrapedAt"]) ??
+    toIso(payload["finishedAt"]) ??
+    toIso(payload["finished_at"]);
 
-  // 6. Upsert data into Supabase
+  console.log("[apify-kyobo-callback] normalized result", {
+    isbn13,
+    kyoboUrl,
+    categories,
+    scrapedAt,
+  });
+
   try {
-    await upsertKyoboRawPayload(isbn13, payload, scrapedAt ?? undefined);
+    await upsertKyoboRawPayload(isbn13, item, scrapedAt ?? undefined);
     await updateKyoboCategory(isbn13, { kyoboUrl, categories });
   } catch (err) {
-    console.error(`[apify-kyobo-callback] supabase update failed for ${isbn13}:`, err);
+    console.error(`[apify-kyobo-callback] Supabase update failed for ${isbn13}:`, err);
     return NextResponse.json({ error: "supabase error" }, { status: 500 });
   }
 
-  // 7. Revalidate cache tag (non-fatal)
   try {
     revalidateTag(`book:${isbn13}`);
   } catch (err) {
     console.warn(`[apify-kyobo-callback] revalidate failed for ${isbn13}:`, err);
   }
 
-  // 8. Success
-  return NextResponse.json(
-    { status: "ok" },
-    { headers: { "Cache-Control": "no-store" } }
-  );
+  return NextResponse.json({ status: "ok" }, { headers: { "Cache-Control": "no-store" } });
 }
