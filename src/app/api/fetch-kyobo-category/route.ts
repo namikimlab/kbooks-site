@@ -31,8 +31,13 @@ async function fetchWithTimeout(url: string, method: "GET" | "HEAD") {
 async function resolveKyoboUrl(isbn13: string, current: string | null) {
   if (current) return current;
   const resolved = await getKyoboProductUrlFromIsbn(isbn13, fetchWithTimeout);
-  if (resolved) return resolved;
-  return `https://search.kyobobook.co.kr/search?keyword=${isbn13}`;
+  if (!resolved) {
+    console.warn("[fetch-kyobo-category] unresolved Kyobo URL from autocomplete", {
+      isbn13,
+    });
+    return null;
+  }
+  return resolved;
 }
 
 /**
@@ -84,6 +89,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ status: "skipped" });
 
   const kyoboUrl = await resolveKyoboUrl(isbn13, book?.kyobo_url ?? null);
+  if (!kyoboUrl) {
+    console.warn("[fetch-kyobo-category] skipping trigger due to missing Kyobo URL", {
+      isbn13,
+    });
+    return NextResponse.json(
+      { status: "skipped", reason: "missing-kyobo-url" },
+      { status: 202 },
+    );
+  }
   if (kyoboUrl && kyoboUrl !== book?.kyobo_url)
     await upsertKyoboUrlOnly(isbn13, kyoboUrl).catch(console.error);
 

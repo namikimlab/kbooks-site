@@ -25,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
+        suppressHydrationWarning
         className={`${notoSans.variable} antialiased min-h-screen bg-background text-foreground`}
       >
         <Header /> 

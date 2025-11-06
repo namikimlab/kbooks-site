@@ -162,7 +162,7 @@ export default async function BookDetailPage({
             </div>
           ) : (
             <div className="mt-6 text-sm text-muted-foreground">
-              🚧 태그 수집 중이에요. 잠시 후 새로고침 해보세요.
+              🚧 태그 수집 중이에요.
             </div>
           )}
         </div>
