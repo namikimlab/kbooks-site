@@ -15,6 +15,7 @@ type ProfileRow = {
   nickname: string;
   bio: string | null;
   avatar_url: string | null;
+  link_url: string | null;
 };
 
 type SearchParams = Promise<{ error?: string }>;
@@ -53,6 +54,7 @@ async function upsertProfile(formData: FormData) {
   const bioInput = formData.get("bio");
   const avatarRemove = formData.get("avatar_remove") === "1";
   const avatarFile = formData.get("avatar_file");
+  const linkUrlInput = formData.get("link_url");
 
   const handle = handleInput ? String(handleInput).trim() : "";
   const nickname = nicknameInput ? String(nicknameInput).trim() : "";
@@ -71,6 +73,20 @@ async function upsertProfile(formData: FormData) {
   }
 
   const normalizedBio = bio.length > 0 ? bio : null;
+  let normalizedLinkUrl: string | null = null;
+  if (linkUrlInput) {
+    const linkCandidate = String(linkUrlInput).trim();
+    if (linkCandidate.length > 0) {
+      if (!/^https?:\/\//i.test(linkCandidate)) {
+        redirect(
+          `/profile/edit?error=${encodeURIComponent(
+            "링크는 http:// 또는 https:// 로 시작해야 해요."
+          )}`
+        );
+      }
+      normalizedLinkUrl = linkCandidate;
+    }
+  }
 
   const { data: existingProfile } = await supabase
     .from("user_profile")
@@ -144,6 +160,7 @@ async function upsertProfile(formData: FormData) {
         nickname,
         bio: normalizedBio,
         avatar_url: resolvedAvatarUrl,
+        link_url: normalizedLinkUrl,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
@@ -180,7 +197,7 @@ export default async function ProfileEditPage({
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profile")
-    .select("handle, nickname, bio, avatar_url")
+    .select("handle, nickname, bio, avatar_url, link_url")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>();
 
@@ -195,6 +212,7 @@ export default async function ProfileEditPage({
     sanitizeText(user.email);
   const initialBio = sanitizeText(profile?.bio);
   const initialAvatarUrl = sanitizeText(profile?.avatar_url);
+  const initialLinkUrl = sanitizeText(profile?.link_url);
 
   const profileUrl = initialHandle ? `/users/${initialHandle}` : "/";
   const initials = buildInitials(initialNickname || user.email);
@@ -215,11 +233,7 @@ export default async function ProfileEditPage({
           </div>
         ) : null}
 
-        <form
-          action={upsertProfile}
-          className="space-y-6"
-          encType="multipart/form-data"
-        >
+        <form action={upsertProfile} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="handle" className="block text-sm font-medium text-foreground">
               프로필 주소 (handle)
@@ -252,6 +266,22 @@ export default async function ProfileEditPage({
               required
               placeholder="예: 김북덕"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="link_url" className="block text-sm font-medium text-foreground">
+              링크
+            </label>
+            <Input
+              id="link_url"
+              name="link_url"
+              defaultValue={initialLinkUrl}
+              type="url"
+              placeholder="https://example.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              공개 프로필에 링크를 하나 표시할 수 있어요. http:// 또는 https:// 로 시작해야 합니다.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -14,6 +14,7 @@ type UserProfile = {
   nickname: string;
   bio: string | null;
   avatar_url: string | null;
+  link_url: string | null;
 };
 
 function initialsFromProfile(profile: UserProfile) {
@@ -44,7 +45,7 @@ export default async function UserProfilePage({
   const [{ data: profile, error: profileError }, userResult] = await Promise.all([
     supabase
       .from("user_profile")
-      .select("id, handle, nickname, bio, avatar_url")
+      .select("id, handle, nickname, bio, avatar_url, link_url")
       .eq("handle", handle)
       .maybeSingle<UserProfile>(),
     supabase.auth.getUser(),
@@ -87,6 +88,20 @@ export default async function UserProfilePage({
           ) : (
             <p className="text-sm text-muted-foreground">아직 소개가 없어요.</p>
           )}
+          <div className="text-sm">
+            {profile.link_url ? (
+              <a
+                href={profile.link_url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {profile.link_url}
+              </a>
+            ) : (
+              <span className="text-muted-foreground">링크가 아직 없어요.</span>
+            )}
+          </div>
         </div>
         {isOwner ? (
           <div className="flex items-center gap-2">
