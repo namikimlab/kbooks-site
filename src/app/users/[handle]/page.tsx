@@ -135,6 +135,13 @@ export default async function UserProfilePage({
             </div>
           </TabsContent>
           <TabsContent value="lists">
+            {isOwner && (
+              <div className="mb-4 flex justify-end">
+                <Button asChild>
+                  <Link href={`/lists/new?next=/users/${profile.handle}`}>리스트 만들기</Link>
+                </Button>
+              </div>
+            )}
             <div className="rounded-xl border border-border/70 bg-background/70 p-6 text-sm text-muted-foreground">
               내가 만든 리스트가 곧 이곳에서 확인 가능해질 거예요.
             </div>

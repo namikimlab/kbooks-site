@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ThumbsUp } from "lucide-react";
+import { Heart } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 
 type LikeButtonProps = {
@@ -160,20 +160,21 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
     <button
       onClick={handleToggleLike}
       disabled={loading}
-      className={`mt-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm
+      aria-pressed={liked}
+      className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors
         ${
           liked
             ? "border-transparent bg-primary text-primary-foreground"
             : "border-border bg-background text-foreground hover:bg-muted"
         }`}
     >
-      <ThumbsUp
-        className={`h-4 w-4 ${liked ? "opacity-100" : "opacity-60"}`}
+      <Heart
+        className="h-4 w-4"
         strokeWidth={2}
+        fill={liked ? "currentColor" : "none"}
       />
-      <span className="font-medium">
-        추천해요
-        {likeCount !== null ? ` (${likeCount})` : ""}
+      <span>
+        좋아요{likeCount !== null ? ` (${likeCount})` : ""}
       </span>
     </button>
   );

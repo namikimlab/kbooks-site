@@ -1,6 +1,7 @@
 // app/books/[id]/page.tsx
+import BookActionButtons from "@/components/BookActionButtons";
+import BookDescription from "@/components/BookDescription";
 import CoverImage from "@/components/CoverImage";
-import LikeButton from "@/components/LikeButton";
 import {
   BookRow,
   ensureBookStub,
@@ -186,12 +187,8 @@ export default async function BookDetailPage({
             {(display.publisher ?? "출판사 정보 없음")}
             {display.publishYear ? ` · ${display.publishYear}` : ""}
           </div>
-          <div className="mt-3">
-            <LikeButton isbn13={isbn13} />
-          </div>
-          <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90 max-w-prose">
-            {display.description?.trim() ? display.description : "소개 정보가 아직 없습니다."}
-          </p>
+          <BookActionButtons isbn13={isbn13} />
+          <BookDescription text={display.description} />
 
           {display.category && display.category.length > 0 ? (
             <div className="mt-6 flex flex-wrap gap-2">
