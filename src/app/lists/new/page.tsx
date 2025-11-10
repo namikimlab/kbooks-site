@@ -114,7 +114,7 @@ export default function CreateListPage() {
   }
 
   return (
-    <section className="mx-auto max-w-2xl space-y-8">
+    <section className="mx-auto max-w-2xl">
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground">새 리스트 만들기</p>
         <h1 className="text-3xl font-semibold leading-tight">새 리스트 만들기</h1>

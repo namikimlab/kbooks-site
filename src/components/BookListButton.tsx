@@ -82,7 +82,7 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
     } catch {
       window.sessionStorage.removeItem(REOPEN_FLAG_KEY);
     }
-  }, [REOPEN_FLAG_KEY, isbn13]);
+  }, [isbn13]);
 
   useEffect(() => {
     if (!pendingReopen) return;

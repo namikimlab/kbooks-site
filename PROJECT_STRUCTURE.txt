@@ -1,0 +1,51 @@
+# Project Structure Overview
+
+This is a Next.js 15 App Router project focused on a social reading/list platform. The high‑level layout:
+
+## Root
+- `package.json`, `package-lock.json`, `pnpm-lock.yaml`: dependency manifests; project currently uses npm scripts (`npm run dev`, `npm run lint`).
+- `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `eslint.config.mjs`: framework/tooling configs.
+- `components.json`: shadcn-style component generator metadata.
+- `README.md`: default Next.js boilerplate.
+- `todo.md` / `kb.txt`: ad-hoc local notes.
+- `public/`: static assets (SVG logos, `placeholder-cover.jpg` fallback cover).
+
+## src/app (Next.js App Router)
+- `layout.tsx`: global layout, wraps all pages.
+- `page.tsx`: landing/home page.
+- `/books/[id]/page.tsx`: book detail page; fetches book metadata, triggers background enrichment, renders `BookActionButtons`.
+- `/lists/new/page.tsx`: client form for creating lists (title/description/visibility) via `/api/user-lists`.
+- `/lists/[id]/page.tsx`: server-rendered list detail—title, owner info, orderable book list, edit/share controls. Uses `ListBooksList` for drag/touch reordering via `/api/user-lists/[id]/positions`.
+- `/lists/[id]/edit/page.tsx`: edit UI for title/description/visibility; protected via Supabase auth.
+- `/users/[handle]/page.tsx`: profile hub with tabs for activity, likes, reads, lists. Renders summary components from `src/components/users`.
+- `/profile/edit/page.tsx`: profile editing form.
+- `/search/page.tsx`: Kakao-powered search listing.
+- `/api/...`: serverless route handlers (Supabase CRUD, external fetch proxies, cover/thumb endpoints, list order updates, etc.). Key routes:
+  - `/api/user-lists`: create lists.
+  - `/api/user-lists/[id]`: get/update/delete individual lists.
+  - `/api/user-lists/[id]/positions`: new endpoint that resets and rewrites `user_list_books.position` for reordering.
+  - `/api/fetch-*`, `/api/thumbs/[isbn]`, etc.: book data acquisition.
+
+## src/components
+Grouped into subfolders:
+- `components/lists/`: list-specific client components (`ListBooksList` handles draggable/touch reordering; `ListCoverCollage` shows hero cover).
+- `components/users/`: profile sections (likes, reads, lists) with client interactivity (pagination, toggles, Supabase mutations).
+- `components/sections/`, `components/ui/`: shared UI atoms built from Radix/shadcn (Buttons, Tabs, etc.).
+- Other shared components: `BookActionButtons`, `BookListModal`, `CoverImage`, `DescriptionSection`, etc.
+
+## src/lib
+- Supabase helpers (`supabaseServerClients`, `supabaseBrowserClient`), book data helpers (`books.ts`), env utilities, ISBN utilities, Kakao/Kyobo integrations, etc. These modules encapsulate server-side logic invoked by API routes or server components.
+
+## src/utils / src/styles
+- Utility helpers (`lib/utils.ts` exports `cn`, etc.) and Tailwind/global CSS definitions.
+
+## Cross-cutting behaviors
+- Auth: Supabase client on both server (`createSupabaseServerClient`) and client (`createSupabaseBrowserClient`) ensures gated routes (lists/profile edit, reordering) validate ownership.
+- Data: Supabase tables `books`, `user_lists`, `user_list_books`, `book_likes`, `user_reads`, etc. Most server components fetch directly via server client.
+- UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
+
+## Design Principles
+- **Minimal + Modular:** prefer small, composable components, API handlers, and helpers. Avoid over-engineering—each module should do one job clearly.
+- **Straightforward + Safe:** optimize for readability and predictable behavior; include guardrails (auth checks, error handling) so features remain production-ready without unnecessary complexity.
+
+Use this file as a quick orientation map when navigating or extending the codebase. Update it whenever major structural changes land so future work has an up‑to‑date reference.
