@@ -129,7 +129,7 @@ export function UserReadsSection({
         }
 
         const { error } = await supabase
-          .from("user_reads")
+          .from("user_read")
           .delete()
           .eq("user_id", user.id)
           .eq("isbn13", isbn13);
@@ -166,7 +166,7 @@ export function UserReadsSection({
 
         const nextPrivacy = !book.isPrivate;
         const { error } = await supabase
-          .from("user_reads")
+          .from("user_read")
           .update({ is_private: nextPrivacy })
           .eq("user_id", user.id)
           .eq("isbn13", book.isbn13);

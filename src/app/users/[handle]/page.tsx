@@ -417,7 +417,7 @@ async function fetchUserReads({
   const normalizedPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 
   const countQuery = supabase
-    .from("user_reads")
+    .from("user_read")
     .select("isbn13", { count: "exact", head: true })
     .eq("user_id", userId);
 
@@ -517,7 +517,7 @@ function fetchReadsPage({
   const to = from + READ_PAGE_SIZE - 1;
 
   const query = supabase
-    .from("user_reads")
+    .from("user_read")
     .select<BookReadRow>("isbn13, read_at, is_private")
     .eq("user_id", userId)
     .order("read_at", { ascending: false })

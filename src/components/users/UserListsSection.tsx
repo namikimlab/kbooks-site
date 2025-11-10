@@ -52,7 +52,7 @@ export function UserListsSection({
                 )}
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-sm font-semibold text-foreground sm:text-base">
+                <span className="text-sm font-semibold leading-snug text-foreground sm:text-base line-clamp-2 break-words">
                   {list.title}
                 </span>
                 <span className="text-xs text-muted-foreground sm:text-sm">

@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClients";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseServiceRoleClient";
+import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 
 export const dynamic = "force-dynamic";
 
@@ -218,123 +215,18 @@ export default async function ProfileEditPage({
   const initials = buildInitials(initialNickname || user.email);
 
   return (
-    <section className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center px-6 py-16">
-      <div className="space-y-6 rounded-2xl border border-border/70 bg-background/80 p-8 shadow-sm">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">프로필 편집</h1>
-          <p className="text-sm text-muted-foreground">
-            공개 프로필에 보여지는 정보를 수정할 수 있어요.
-          </p>
-        </div>
-
-        {errorMessage ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <form action={upsertProfile} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="handle" className="block text-sm font-medium text-foreground">
-              프로필 주소 (handle)
-            </label>
-            <Input
-              id="handle"
-              name="handle"
-              defaultValue={initialHandle}
-              required
-              autoComplete="off"
-              minLength={2}
-              maxLength={32}
-              placeholder="예: booklover"
-            />
-            <p className="text-xs text-muted-foreground">
-              {`당신의 프로필은 `}
-              <span className="font-mono text-foreground">{`/users/{handle}`}</span>
-              {` 경로로 공유돼요.`}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="nickname" className="block text-sm font-medium text-foreground">
-              표시 이름
-            </label>
-            <Input
-              id="nickname"
-              name="nickname"
-              defaultValue={initialNickname}
-              required
-              placeholder="예: 김북덕"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="link_url" className="block text-sm font-medium text-foreground">
-              링크
-            </label>
-            <Input
-              id="link_url"
-              name="link_url"
-              defaultValue={initialLinkUrl}
-              type="url"
-              placeholder="https://example.com"
-            />
-            <p className="text-xs text-muted-foreground">
-              공개 프로필에 링크를 하나 표시할 수 있어요. http:// 또는 https:// 로 시작해야 합니다.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <span className="block text-sm font-medium text-foreground">프로필 이미지</span>
-            <div className="flex items-center gap-4">
-              <Avatar className="size-16 border border-border">
-                {initialAvatarUrl ? (
-                  <AvatarImage src={initialAvatarUrl} alt="현재 프로필 이미지" className="object-cover" />
-                ) : (
-                  <AvatarFallback className="text-base font-semibold uppercase">{initials}</AvatarFallback>
-                )}
-              </Avatar>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <label className="block">
-                  <span className="sr-only">새 아바타 업로드</span>
-                  <Input id="avatar_file" name="avatar_file" type="file" accept="image/*" />
-                </label>
-                <p>새 이미지를 업로드하면 자동으로 교체돼요. 비워두면 기존 이미지를 유지합니다.</p>
-                {initialAvatarUrl ? (
-                  <label className="flex items-center gap-2 text-xs">
-                    <input type="checkbox" name="avatar_remove" value="1" />
-                    <span>현재 이미지를 제거할게요.</span>
-                  </label>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="bio" className="block text-sm font-medium text-foreground">
-              소개
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              defaultValue={initialBio}
-              rows={5}
-              className="text-sm focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px] dark:bg-input/30 border-input w-full rounded-md border bg-transparent px-3 py-2 leading-relaxed outline-none ring-offset-background placeholder:text-muted-foreground"
-              placeholder="간단한 소개를 작성해보세요."
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3">
-            <Link
-              href={profileUrl}
-              className="text-sm text-muted-foreground transition hover:text-foreground"
-            >
-              취소
-            </Link>
-            <Button type="submit">저장</Button>
-          </div>
-        </form>
-      </div>
+    <section className="mx-auto max-w-2xl">
+      <ProfileEditForm
+        action={upsertProfile}
+        profileUrl={profileUrl}
+        initials={initials}
+        initialHandle={initialHandle}
+        initialNickname={initialNickname}
+        initialBio={initialBio}
+        initialAvatarUrl={initialAvatarUrl}
+        initialLinkUrl={initialLinkUrl}
+        errorMessage={errorMessage}
+      />
     </section>
   );
 }

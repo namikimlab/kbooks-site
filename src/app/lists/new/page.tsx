@@ -68,7 +68,13 @@ export default function CreateListPage() {
   }, [searchParams]);
 
   const trimmedTitle = title.trim();
-  const isSaveDisabled = trimmedTitle.length === 0 || isSaving;
+  const titleCharLimit = 30;
+  const descriptionCharLimit = 150;
+  const isSaveDisabled =
+    trimmedTitle.length === 0 ||
+    trimmedTitle.length > titleCharLimit ||
+    description.length > descriptionCharLimit ||
+    isSaving;
 
   const handleCancel = React.useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -138,6 +144,7 @@ export default function CreateListPage() {
               placeholder="여름에 읽기 좋은 책들"
               className="h-12 text-lg font-medium placeholder:font-normal"
               aria-required="true"
+              maxLength={titleCharLimit}
             />
           </div>
 
@@ -151,6 +158,7 @@ export default function CreateListPage() {
               value={description}
               onChange={event => setDescription(event.target.value)}
               placeholder="리스트에 대한 간단한 설명을 써주세요."
+              maxLength={descriptionCharLimit}
             />
           </div>
 

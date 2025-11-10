@@ -42,7 +42,7 @@ export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
 
         if (user) {
           const { data, error } = await supabase
-            .from("user_reads")
+            .from("user_read")
             .select("is_private")
             .eq("user_id", user.id)
             .eq("isbn13", isbn13)
@@ -50,7 +50,7 @@ export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
 
           if (!ignore) {
             if (error) {
-              console.error("failed to load user_reads", error);
+              console.error("failed to load user_read", error);
             } else if (data) {
               setVisibility(data.is_private ? "private" : "public");
             } else {
@@ -130,7 +130,7 @@ export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from("user_reads")
+        .from("user_read")
         .upsert(
           {
             user_id: userId,
@@ -141,12 +141,12 @@ export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
         );
 
       if (error) {
-        console.error("failed to upsert user_reads", error);
+        console.error("failed to upsert user_read", error);
       } else {
         setVisibility(isPrivate ? "private" : "public");
       }
     } catch (err) {
-      console.error("user_reads update failed", err);
+      console.error("user_read update failed", err);
     } finally {
       setLoading(false);
       setMenuOpen(false);

@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { EditListForm } from "@/components/lists/EditListForm";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClients";
@@ -58,34 +56,23 @@ export default async function EditListPage({ params }: { params: EditPageParams 
 
   return (
     <section className="mx-auto max-w-2xl">
-      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <Link
-          href={detailHref}
-          className="inline-flex items-center gap-1 rounded-full border border-border/70 px-3 py-1 text-xs font-medium text-foreground transition hover:bg-muted"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          리스트로 돌아가기
-        </Link>
-        <span className="hidden text-xs text-border sm:inline">●</span>
-        <span className="hidden text-xs text-muted-foreground sm:inline">리스트 편집</span>
-      </div>
-
       <header className="space-y-2">
-        <p className="text-sm text-muted-foreground">리스트 편집</p>
-        <h1 className="text-3xl font-semibold leading-tight">{list.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          제목, 설명, 공개 여부를 수정할 수 있어요.
-        </p>
+        <h1 className="text-3xl font-semibold leading-tight">리스트 편집</h1>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>제목, 설명, 공개 여부를 수정할 수 있어요.</p>
+        </div>
       </header>
 
-      <EditListForm
-        listId={list.id}
-        detailHref={detailHref}
-        editHref={editPath}
-        initialTitle={list.title}
-        initialDescription={list.description}
-        initialVisibility={initialVisibility}
-      />
+      <div className="mt-6">
+        <EditListForm
+          listId={list.id}
+          detailHref={detailHref}
+          editHref={editPath}
+          initialTitle={list.title}
+          initialDescription={list.description}
+          initialVisibility={initialVisibility}
+        />
+      </div>
     </section>
   );
 }

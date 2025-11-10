@@ -181,7 +181,7 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                     />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-lg font-semibold text-foreground">
+                    <span className="line-clamp-2 text-lg font-semibold text-foreground">
                       {book.title ?? "제목 정보 없음"}
                     </span>
                     <span className="truncate text-sm text-muted-foreground">

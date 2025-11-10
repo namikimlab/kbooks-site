@@ -41,7 +41,7 @@ Grouped into subfolders:
 
 ## Cross-cutting behaviors
 - Auth: Supabase client on both server (`createSupabaseServerClient`) and client (`createSupabaseBrowserClient`) ensures gated routes (lists/profile edit, reordering) validate ownership.
-- Data: Supabase tables `books`, `user_lists`, `user_list_books`, `book_likes`, `user_reads`, etc. Most server components fetch directly via server client.
+- Data: Supabase tables `books`, `user_lists`, `user_list_books`, `book_likes`, `user_read`, etc. Most server components fetch directly via server client.
 - UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
 
 ## Design Principles

@@ -21,6 +21,9 @@ type EditListFormProps = {
 
 type ApiError = Error & { status?: number };
 
+const TITLE_CHAR_LIMIT = 30;
+const DESCRIPTION_CHAR_LIMIT = 150;
+
 export function EditListForm({
   listId,
   detailHref,
@@ -50,7 +53,11 @@ export function EditListForm({
   }, [initialVisibility]);
 
   const trimmedTitle = title.trim();
-  const isSaveDisabled = trimmedTitle.length === 0 || isSaving;
+  const isSaveDisabled =
+    trimmedTitle.length === 0 ||
+    trimmedTitle.length > TITLE_CHAR_LIMIT ||
+    description.length > DESCRIPTION_CHAR_LIMIT ||
+    isSaving;
 
   const handleCancel = React.useCallback(() => {
     router.push(detailHref);
@@ -136,33 +143,27 @@ export function EditListForm({
             placeholder="나만의 추천 목록"
             className="h-12 text-lg font-medium placeholder:font-normal"
             aria-required="true"
+            maxLength={TITLE_CHAR_LIMIT}
           />
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label htmlFor="list-description" className="text-sm font-medium text-foreground">
-              설명 (선택)
-            </label>
-            <span className="text-xs text-muted-foreground">optional</span>
-          </div>
+          <label htmlFor="list-description" className="text-sm font-medium text-foreground">
+            설명 (선택)
+          </label>
           <Textarea
             id="list-description"
             name="description"
             value={description}
             onChange={event => setDescription(event.target.value)}
             placeholder="리스트 소개를 입력하세요."
-            aria-describedby="list-description-helper"
+            maxLength={DESCRIPTION_CHAR_LIMIT}
           />
-          <p id="list-description-helper" className="text-sm text-muted-foreground">
-            리스트에 대한 간단한 설명을 쓸 수 있어요.
-          </p>
         </div>
 
         <div className="space-y-3">
           <div>
             <p className="text-sm font-medium text-foreground">공개 여부</p>
-            <p className="text-sm text-muted-foreground">공개 / 비공개</p>
           </div>
           <div className="grid grid-cols-2 gap-2" role="group" aria-label="공개 여부 선택">
             {(
@@ -192,7 +193,7 @@ export function EditListForm({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <small className="text-sm text-muted-foreground">
             제목을 입력해야 저장할 수 있어요.
           </small>
