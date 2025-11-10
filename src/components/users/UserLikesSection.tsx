@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import type { ComponentType } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, LayoutGrid, List as ListIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
@@ -30,9 +31,9 @@ type UserLikesSectionProps = {
   isOwner: boolean;
 };
 
-const VIEW_OPTIONS: Array<{ label: string; value: "list" | "cover" }> = [
-  { label: "목록", value: "list" },
-  { label: "표지", value: "cover" },
+const VIEW_OPTIONS: Array<{ label: string; value: "list" | "cover"; icon: ComponentType<{ className?: string }> }> = [
+  { label: "목록", value: "list", icon: ListIcon },
+  { label: "표지", value: "cover", icon: LayoutGrid },
 ];
 
 export function UserLikesSection({
@@ -151,27 +152,32 @@ export function UserLikesSection({
         </div>
       ) : null}
       {hasLikes ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="text-sm text-muted-foreground">
             {`총 ${totalCount.toLocaleString()}권을 좋아했어요.`}
           </div>
-          <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1">
-            {VIEW_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={view === option.value}
-                onClick={() => setView(option.value)}
-                className={cn(
-                  "rounded-full px-3 py-1 text-sm font-medium transition",
-                  view === option.value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {option.label} 보기
-              </button>
-            ))}
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/40 p-1 ml-[auto] sm:ml-auto">
+            {VIEW_OPTIONS.map(option => {
+              const Icon = option.icon;
+              const isActive = view === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setView(option.value)}
+                  className={cn(
+                    "flex items-center justify-center rounded-2xl px-3 py-1.5 transition",
+                    isActive
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="sr-only">{option.label} 보기</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}

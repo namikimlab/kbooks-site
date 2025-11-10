@@ -49,6 +49,7 @@ type UserListRow = {
   description: string | null;
   is_public: boolean | null;
   updated_at: string | null;
+  created_at: string | null;
 };
 
 type UserListBookRow = {
@@ -265,16 +266,16 @@ export default async function UserProfilePage({
           <TabsContent value="lists">
             <div className="space-y-4">
               {isOwner && (
-                <div className="flex justify-end">
-                  <Button asChild>
-                    <Link href={`/lists/new?next=/users/${profile.handle}`}>리스트 만들기</Link>
-                  </Button>
-                </div>
+                <Button
+                  asChild
+                  className="w-full justify-center rounded-2xl py-4 text-base font-semibold"
+                >
+                  <Link href={`/lists/new?next=/users/${profile.handle}`}>리스트 만들기</Link>
+                </Button>
               )}
               <UserListsSection
                 lists={userLists}
                 isOwner={isOwner}
-                profileHandle={profile.handle}
                 profileNickname={profile.nickname}
               />
             </div>
@@ -540,7 +541,7 @@ async function fetchUserLists({
 }): Promise<UserListSummary[]> {
   const listQuery = supabase
     .from("user_lists")
-    .select<UserListRow>("id, title, description, is_public, updated_at")
+    .select<UserListRow>("id, title, description, is_public, updated_at, created_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -592,7 +593,7 @@ async function fetchUserLists({
       isPublic: Boolean(row.is_public),
       coverIsbn13: cover?.firstIsbn ?? null,
       bookCount: cover?.count ?? 0,
-      updatedAt: row.updated_at ?? null,
+      createdAt: row.created_at ?? null,
     };
   });
 }

@@ -205,6 +205,8 @@ export default async function UserListDetailPage({
         </div>
       </header>
 
+      <div className="my-8 h-px w-full bg-border/70" />
+
       {bookCount === 0 ? (
         <EmptyListBooksState isOwner={isOwner} />
       ) : (

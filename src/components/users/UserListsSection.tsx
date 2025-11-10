@@ -9,20 +9,18 @@ export type UserListSummary = {
   isPublic: boolean;
   coverIsbn13: string | null;
   bookCount: number;
-  updatedAt: string | null;
+  createdAt: string | null;
 };
 
 type UserListsSectionProps = {
   lists: UserListSummary[];
   isOwner: boolean;
-  profileHandle: string;
   profileNickname: string;
 };
 
 export function UserListsSection({
   lists,
   isOwner,
-  profileHandle,
   profileNickname,
 }: UserListsSectionProps) {
   if (lists.length === 0) {
@@ -58,8 +56,8 @@ export function UserListsSection({
                   {list.title}
                 </span>
                 <span className="text-xs text-muted-foreground sm:text-sm">
-                  @{profileHandle} · {list.bookCount}권
-                  {list.updatedAt ? ` · ${formatUpdatedAt(list.updatedAt)}` : ""}
+                  {list.bookCount.toLocaleString()}권
+                  {list.createdAt ? ` · ${formatDateLabel(list.createdAt)}` : ""}
                 </span>
               </div>
             </Link>
@@ -94,10 +92,11 @@ function EmptyListsState({ isOwner, profileNickname }: { isOwner: boolean; profi
   );
 }
 
-function formatUpdatedAt(iso: string) {
+function formatDateLabel(iso: string) {
   try {
     const date = new Date(iso);
     return new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric",
       month: "short",
       day: "numeric",
     }).format(date);

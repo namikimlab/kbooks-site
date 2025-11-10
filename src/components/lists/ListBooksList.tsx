@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type ListBookItem = {
   isbn13: string;
@@ -146,40 +147,41 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
       {isSaving ? (
         <p className="text-xs text-muted-foreground">순서를 저장하는 중...</p>
       ) : null}
-      <ul className="divide-y divide-border rounded-2xl border border-border/60 bg-background/80 shadow-sm">
+      <ul className="space-y-3">
         {items.map((book, index) => {
           const order = book.position ?? index + 1;
           const isDragging = draggingIndex === index;
           return (
             <li
               key={book.isbn13}
-              className="px-3 py-3"
+              className="flex items-stretch gap-3 py-1 pl-2 pr-1"
               onDragOver={handleDragOver}
               onDrop={handleDrop(index)}
             >
+              <span className="w-5 text-right text-lg font-semibold text-amber-800 sm:text-xl">
+                {order}
+              </span>
               <div
-                className={`flex items-center gap-3 rounded-xl px-2 py-1 ${
+                className={cn(
+                  "flex flex-1 items-center gap-3 rounded-2xl bg-muted/40 px-3 py-2.5 transition",
                   isDragging ? "bg-muted/60" : ""
-                }`}
+                )}
               >
-                <span className="w-6 text-right text-sm font-semibold text-muted-foreground">
-                  {order}.
-                </span>
                 <Link
                   href={`/books/${book.isbn13}`}
-                  className="flex flex-1 items-center gap-3"
+                  className="flex flex-1 items-center gap-4"
                 >
-                  <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted">
+                  <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-background">
                     <Image
                       src={`/api/thumbs/${book.isbn13}`}
                       alt={book.title ?? "책 표지"}
                       fill
-                      sizes="64px"
+                      sizes="80px"
                       className="object-cover"
                     />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-base font-semibold text-foreground">
+                    <span className="truncate text-lg font-semibold text-foreground">
                       {book.title ?? "제목 정보 없음"}
                     </span>
                     <span className="truncate text-sm text-muted-foreground">
@@ -189,14 +191,14 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                 </Link>
                 {isOwner ? (
                   isTouchDevice ? (
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className="flex flex-col items-center gap-1">
                       <button
                         type="button"
                         onClick={event => {
                           event.preventDefault();
                           handleMove(index, "up");
                         }}
-                        className="rounded-full border border-border/60 p-1 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                        className="rounded-full border border-border/40 p-1.5 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
                         aria-label="위로 이동"
                         disabled={index === 0 || isSaving}
                       >
@@ -208,7 +210,7 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                           event.preventDefault();
                           handleMove(index, "down");
                         }}
-                        className="rounded-full border border-border/60 p-1 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                        className="rounded-full border border-border/40 p-1.5 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
                         aria-label="아래로 이동"
                         disabled={index === items.length - 1 || isSaving}
                       >
@@ -222,7 +224,7 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                       onDragStart={handleDragStart(index)}
                       onDragEnd={handleDragEnd}
                       onDragOver={event => event.stopPropagation()}
-                      className="ml-auto rounded-full p-2 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="rounded-full p-2 text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="리스트 순서 변경"
                       onClick={event => event.preventDefault()}
                     >

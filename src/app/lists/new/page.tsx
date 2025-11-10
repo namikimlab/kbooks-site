@@ -117,14 +117,14 @@ export default function CreateListPage() {
   return (
     <section className="mx-auto max-w-2xl">
       <header className="space-y-2">
-        <p className="text-sm text-muted-foreground">새 리스트 만들기</p>
         <h1 className="text-3xl font-semibold leading-tight">새 리스트 만들기</h1>
-        <p className="text-base text-muted-foreground">
-          책을 나중에 추가할 수 있어요. 리스트에는 최대 {MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.
-        </p>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>좋아하는 책을 찾아 리스트에 더해보세요.</p>
+          <p>최대 {MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.</p>
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         <div className="space-y-6 rounded-2xl border border-border bg-card/80 p-6 shadow-sm">
           <div className="space-y-2">
             <label htmlFor="list-title" className="text-sm font-medium text-foreground">
@@ -142,29 +142,21 @@ export default function CreateListPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="list-description" className="text-sm font-medium text-foreground">
-                설명 (선택)
-              </label>
-              <span className="text-xs text-muted-foreground">optional</span>
-            </div>
+            <label htmlFor="list-description" className="text-sm font-medium text-foreground">
+              설명 (선택)
+            </label>
             <Textarea
               id="list-description"
               name="description"
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={event => setDescription(event.target.value)}
               placeholder="리스트에 대한 간단한 설명을 써주세요."
-              aria-describedby="list-description-helper"
             />
-            <p id="list-description-helper" className="text-sm text-muted-foreground">
-              리스트에 대한 간단한 설명을 써주세요.
-            </p>
           </div>
 
           <div className="space-y-3">
             <div>
               <p className="text-sm font-medium text-foreground">공개 여부</p>
-              <p className="text-sm text-muted-foreground">공개 / 비공개</p>
             </div>
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="공개 여부 선택">
               {(
@@ -195,7 +187,7 @@ export default function CreateListPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <small className="text-sm text-muted-foreground">
             제목을 입력해야 저장할 수 있어요.
           </small>
