@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { MAX_BOOKS_PER_LIST } from "@/constants/lists";
 
 type ListVisibility = "public" | "private";
 
@@ -118,7 +119,9 @@ export default function CreateListPage() {
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground">새 리스트 만들기</p>
         <h1 className="text-3xl font-semibold leading-tight">새 리스트 만들기</h1>
-        <p className="text-base text-muted-foreground">책을 나중에 추가할 수 있어요.</p>
+        <p className="text-base text-muted-foreground">
+          책을 나중에 추가할 수 있어요. 리스트에는 최대 {MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.
+        </p>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-8">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 import { cn } from "@/lib/utils";
+import { MAX_BOOKS_PER_LIST } from "@/constants/lists";
 
 type BookListModalProps = {
   open: boolean;
@@ -43,6 +44,8 @@ export default function BookListModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [serverSelection, setServerSelection] = useState<Set<string>>(new Set());
+  const [listCounts, setListCounts] = useState<Record<string, number>>({});
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -75,6 +78,23 @@ export default function BookListModal({
         setSelectedIds(fallbackSet);
         setServerSelection(fallbackSet);
         return;
+      }
+
+      const { data: countRows, error: countError } = await supabase
+        .from("user_list_books")
+        .select("list_id")
+        .in("list_id", listIds);
+
+      if (countError) {
+        console.error("failed to fetch list counts", countError);
+      } else {
+        const counts: Record<string, number> = {};
+        for (const row of countRows ?? []) {
+          const id = row.list_id as string;
+          if (!id) continue;
+          counts[id] = (counts[id] ?? 0) + 1;
+        }
+        setListCounts(counts);
       }
 
       const { data: membership, error: membershipError } = await supabase
@@ -114,6 +134,12 @@ export default function BookListModal({
     };
   }, [open, refreshLists]);
 
+  useEffect(() => {
+    if (!limitMessage) return;
+    const timeout = setTimeout(() => setLimitMessage(null), 2500);
+    return () => clearTimeout(timeout);
+  }, [limitMessage]);
+
   if (!open) return null;
 
   const recentLists = lists.slice(0, 3);
@@ -128,6 +154,12 @@ export default function BookListModal({
       if (next.has(id)) {
         next.delete(id);
       } else {
+        const alreadySelected = serverSelection.has(id);
+        const count = listCounts[id] ?? 0;
+        if (!alreadySelected && count >= MAX_BOOKS_PER_LIST) {
+          setLimitMessage(`한 리스트에는 최대 ${MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.`);
+          return prev;
+        }
         next.add(id);
       }
       return next;
@@ -173,6 +205,14 @@ export default function BookListModal({
             <p className="mt-1 text-sm text-muted-foreground">
               최근 사용한 리스트에서 빠르게 선택하거나 전체 리스트를 검색할 수 있어요.
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              각 리스트에는 최대 {MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.
+            </p>
+            {limitMessage ? (
+              <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                {limitMessage}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -184,15 +224,21 @@ export default function BookListModal({
                 </p>
               ) : (
                 <ul className="mt-3 space-y-2">
-                  {recentLists.map(list => (
+                  {recentLists.map(list => {
+                    const isFull =
+                      !selectedIds.has(list.id) &&
+                      (listCounts[list.id] ?? 0) >= MAX_BOOKS_PER_LIST;
+                    return (
                     <ListCheckbox
                       key={list.id}
                       title={list.title}
                       description={list.description}
                       checked={selectedIds.has(list.id)}
                       onChange={() => handleCheckbox(list.id)}
+                      disabled={isFull}
                     />
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </section>
@@ -229,15 +275,21 @@ export default function BookListModal({
                   ) : filteredLists.length === 0 ? (
                     <p className="text-sm text-muted-foreground">일치하는 리스트가 없어요.</p>
                   ) : (
-                    filteredLists.map(list => (
+                    filteredLists.map(list => {
+                      const isFull =
+                        !selectedIds.has(list.id) &&
+                        (listCounts[list.id] ?? 0) >= MAX_BOOKS_PER_LIST;
+                      return (
                       <ListCheckbox
                         key={`all-${list.id}`}
                         title={list.title}
                         description={list.description}
                         checked={selectedIds.has(list.id)}
                         onChange={() => handleCheckbox(list.id)}
+                        disabled={isFull}
                       />
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </section>
@@ -283,26 +335,34 @@ type ListCheckboxProps = {
   description: string | null;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
 };
 
-function ListCheckbox({ title, description, checked, onChange }: ListCheckboxProps) {
+function ListCheckbox({ title, description, checked, onChange, disabled }: ListCheckboxProps) {
   return (
     <label
       className={cn(
         "flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 text-sm transition-colors",
-        checked ? "border-primary bg-primary/5" : "border-border hover:bg-muted"
+        checked ? "border-primary bg-primary/5" : "border-border hover:bg-muted",
+        disabled && "cursor-not-allowed opacity-60 hover:bg-transparent"
       )}
     >
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
+        disabled={disabled}
         className="mt-1 h-4 w-4 accent-primary"
       />
       <span>
         <span className="font-medium text-foreground">{title}</span>
         {description ? (
           <span className="mt-1 block text-xs text-muted-foreground">{description}</span>
+        ) : null}
+        {disabled ? (
+          <span className="mt-1 block text-[11px] text-amber-700">
+            최대 {MAX_BOOKS_PER_LIST}권 제한
+          </span>
         ) : null}
       </span>
     </label>

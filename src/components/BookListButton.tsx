@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import BookListModal from "@/components/BookListModal";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 import { cn } from "@/lib/utils";
+import { MAX_BOOKS_PER_LIST } from "@/constants/lists";
 
 const REOPEN_FLAG_KEY = "kbooks:list-modal:reopen";
 
@@ -158,8 +159,46 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
       const prevSet = new Set(previousIds);
       const nextSet = new Set(nextIds);
 
-      const toAdd = nextIds.filter(id => !prevSet.has(id));
+      let toAdd = nextIds.filter(id => !prevSet.has(id));
       const toRemove = previousIds.filter(id => !nextSet.has(id));
+
+      if (toAdd.length > 0) {
+        const { data: countRows, error: countError } = await supabase
+          .from("user_list_books")
+          .select("list_id")
+          .in("list_id", toAdd);
+
+        if (countError) throw countError;
+
+        const countMap = new Map<string, number>();
+        for (const row of countRows ?? []) {
+          const id = row.list_id as string;
+          if (!id) continue;
+          countMap.set(id, (countMap.get(id) ?? 0) + 1);
+        }
+
+        const filteredAdds = toAdd.filter(listId => {
+          const count = countMap.get(listId) ?? 0;
+          if (count >= MAX_BOOKS_PER_LIST) {
+            return false;
+          }
+          countMap.set(listId, count + 1);
+          return true;
+        });
+
+        if (filteredAdds.length !== toAdd.length) {
+          setToast({
+            message: `리스트는 최대 ${MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.`,
+            variant: "error",
+          });
+        }
+
+        toAdd = filteredAdds;
+      }
+
+      if (toAdd.length === 0 && toRemove.length === 0) {
+        return;
+      }
 
       if (toAdd.length > 0) {
         const { error: insertError } = await supabase
@@ -186,7 +225,9 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
       }
 
       setSelectedListIds(nextIds);
-      setToast({ message: "리스트에 저장했어요.", variant: "success" });
+      if (toAdd.length > 0 || toRemove.length > 0) {
+        setToast({ message: "리스트에 저장했어요.", variant: "success" });
+      }
     } catch (err) {
       console.error("book list save failed", err);
       setToast({ message: "리스트 저장에 실패했어요.", variant: "error" });
