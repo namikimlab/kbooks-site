@@ -202,9 +202,6 @@ export default function BookListModal({
         <div className="flex max-h-[80vh] flex-col">
           <div className="border-b px-6 pb-4 pt-6">
             <h2 className="text-lg font-semibold">리스트에 추가</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              최근 사용한 리스트에서 빠르게 선택하거나 전체 리스트를 검색할 수 있어요.
-            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               각 리스트에는 최대 {MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.
             </p>
