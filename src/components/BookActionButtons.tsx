@@ -10,7 +10,7 @@ type BookActionButtonsProps = {
 
 export default function BookActionButtons({ isbn13, kyoboUrl }: BookActionButtonsProps) {
   const buttonClass = "h-11 justify-center w-full rounded-full text-xs";
-  const gridClass = "grid w-full gap-3 grid-cols-2 md:grid-cols-4";
+  const gridClass = "grid w-full gap-2 grid-cols-2 md:grid-cols-4";
   const baseBuyClass =
     "inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition";
 

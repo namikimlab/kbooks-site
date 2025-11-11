@@ -162,7 +162,7 @@ export default function BookReadButton({ isbn13, className }: BookReadButtonProp
         disabled={loading}
         aria-expanded={menuOpen}
         className={cn(
-          "inline-flex w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors",
+          "inline-flex w-full items-center justify-center gap-1 rounded-full border px-2 py-2 text-sm font-medium transition-colors",
           recorded
             ? "border-transparent bg-emerald-500 text-emerald-50 hover:bg-emerald-500/90"
             : "border-border bg-background text-foreground hover:bg-muted",
