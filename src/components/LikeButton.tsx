@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
+import { cn } from "@/lib/utils";
 
 type LikeButtonProps = {
   isbn13: string;
+  className?: string;
 };
 
-export default function LikeButton({ isbn13 }: LikeButtonProps) {
+export default function LikeButton({ isbn13, className }: LikeButtonProps) {
   // local state
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
@@ -161,12 +163,13 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
       onClick={handleToggleLike}
       disabled={loading}
       aria-pressed={liked}
-      className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors
-        ${
-          liked
-            ? "border-transparent bg-primary text-primary-foreground"
-            : "border-border bg-background text-foreground hover:bg-muted"
-        }`}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors",
+        liked
+          ? "border-transparent bg-primary text-primary-foreground"
+          : "border-border bg-background text-foreground hover:bg-muted",
+        className
+      )}
     >
       <Heart
         className="h-4 w-4"

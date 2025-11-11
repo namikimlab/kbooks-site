@@ -12,9 +12,10 @@ const REOPEN_FLAG_KEY = "kbooks:list-modal:reopen";
 
 type BookListButtonProps = {
   isbn13: string;
+  className?: string;
 };
 
-export default function BookListButton({ isbn13 }: BookListButtonProps) {
+export default function BookListButton({ isbn13, className }: BookListButtonProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -241,16 +242,19 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
   };
 
   return (
-    <>
+    <div className="w-full">
       <button
         type="button"
         onClick={handleOpenModal}
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        className={cn(
+          "inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted",
+          className
+        )}
       >
         <Plus className="h-4 w-4" strokeWidth={2} />
         <span>
-          리스트에 추가
+          리스트 담기
           {selectedListIds.length ? ` (${selectedListIds.length})` : ""}
         </span>
       </button>
@@ -284,6 +288,6 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -187,7 +187,7 @@ export default async function BookDetailPage({
             {(display.publisher ?? "출판사 정보 없음")}
             {display.publishYear ? ` · ${display.publishYear}` : ""}
           </div>
-          <BookActionButtons isbn13={isbn13} />
+          <BookActionButtons isbn13={isbn13} kyoboUrl={display.kyoboUrl} />
           {display.description?.trim() ? (
             <BookDescription text={display.description} />
           ) : (

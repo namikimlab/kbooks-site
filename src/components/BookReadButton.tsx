@@ -9,9 +9,10 @@ type Visibility = "public" | "private" | null;
 
 type BookReadButtonProps = {
   isbn13: string;
+  className?: string;
 };
 
-export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
+export default function BookReadButton({ isbn13, className }: BookReadButtonProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -154,17 +155,18 @@ export default function BookReadButton({ isbn13 }: BookReadButtonProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       <button
         type="button"
         onClick={handlePrimaryClick}
         disabled={loading}
         aria-expanded={menuOpen}
         className={cn(
-          "inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+          "inline-flex w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors",
           recorded
             ? "border-transparent bg-emerald-500 text-emerald-50 hover:bg-emerald-500/90"
-            : "border-border bg-background text-foreground hover:bg-muted"
+            : "border-border bg-background text-foreground hover:bg-muted",
+          className
         )}
       >
         <Check className="h-4 w-4" strokeWidth={2} />
