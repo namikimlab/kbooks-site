@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { BookRow } from "@/lib/books";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClients";
-import { cn } from "@/lib/utils";
 import { Pencil, BookOpen, Lock, Unlock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
