@@ -20,13 +20,13 @@ export default function Header() {
             href="/weekly"
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
-            주간 베스트
+            -
           </Link>
           <Link
             href="/life-list"
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
-            인생 책 리스트
+            -
           </Link>
         </nav>
 

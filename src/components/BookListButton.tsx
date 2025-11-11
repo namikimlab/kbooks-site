@@ -102,10 +102,10 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
     async function loadSelections() {
       try {
         const { data, error } = await supabase
-          .from("user_list_books")
-          .select("list_id,user_lists!inner(user_id)")
+          .from("user_list_book")
+          .select("list_id,user_list!inner(user_id)")
           .eq("isbn13", isbn13)
-          .eq("user_lists.user_id", userId);
+          .eq("user_list.user_id", userId);
 
         if (ignore) return;
 
@@ -164,7 +164,7 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
 
       if (toAdd.length > 0) {
         const { data: countRows, error: countError } = await supabase
-          .from("user_list_books")
+          .from("user_list_book")
           .select("list_id")
           .in("list_id", toAdd);
 
@@ -202,7 +202,7 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
 
       if (toAdd.length > 0) {
         const { error: insertError } = await supabase
-          .from("user_list_books")
+          .from("user_list_book")
           .upsert(
             toAdd.map(listId => ({
               list_id: listId,
@@ -216,7 +216,7 @@ export default function BookListButton({ isbn13 }: BookListButtonProps) {
 
       if (toRemove.length > 0) {
         const { error: deleteError } = await supabase
-          .from("user_list_books")
+          .from("user_list_book")
           .delete()
           .eq("isbn13", isbn13)
           .in("list_id", toRemove);

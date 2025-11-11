@@ -23,7 +23,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (!query) {
     return (
-      <section className="mx-auto max-w-6xl px-4 py-8">
+      <section className="mx-auto max-w-6xl">
         <h1 className="text-xl font-semibold">검색어를 입력하세요</h1>
       </section>
     );
@@ -36,10 +36,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const totalPages = Math.min(50, Math.ceil(totalCount / pageSize)); // Kakao limit
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8">
+    <section className="mx-auto max-w-6xl">
       <h1 className="text-xl font-semibold">검색 결과</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        쿼리: “{query}” · {totalCount}건
+        검색어: “{query}” · {totalCount}건
       </p>
 
       {documents.length === 0 ? (
@@ -53,10 +53,10 @@ export default async function SearchPage({ searchParams }: Props) {
               const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
               const isAboveFoldCandidate = index < 4; // Preload images likely visible on initial viewport
               return (
-                <li key={b.isbn13}>
-                  <Card className="overflow-hidden transition hover:shadow-sm">
-                    <Link href={`/books/${b.isbn13}`}>
-                      <CardContent className="p-3">
+                <li key={b.isbn13} className="h-full">
+                  <Card className="overflow-hidden transition hover:shadow-sm h-full">
+                    <Link href={`/books/${b.isbn13}`} className="block h-full">
+                      <CardContent className="flex h-full flex-col">
                         {/* Book cover */}
                         <div className="flex justify-center">
                           {b.isbn13 ? (
@@ -76,14 +76,14 @@ export default async function SearchPage({ searchParams }: Props) {
                         </div>
 
                         {/* Book info */}
-                        <div className="mt-3">
-                          <div className="font-medium text-sm md:text-base leading-relaxed break-words line-clamp-3">
+                        <div className="mt-3 flex-1 flex flex-col">
+                          <div className="font-medium text-sm md:text-base leading-relaxed break-words line-clamp-2 min-h-[2.5rem]">
                             {b.title ?? "Unknown"}
                           </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="mt-1 text-xs text-muted-foreground line-clamp-1 min-h-[1.25rem]">
                             {b.authors?.join(", ") ?? "Unknown author"}
                           </div>
-                          <div className="mt-0.5 text-xs text-muted-foreground">
+                          <div className="mt-0.5 text-xs text-muted-foreground line-clamp-1 min-h-[1.25rem]">
                             {b.publisher ?? "Unknown publisher"}
                             {year ? ` · ${year}` : ""}
                           </div>

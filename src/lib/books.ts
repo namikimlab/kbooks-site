@@ -37,7 +37,7 @@ const DAY_MS = 86_400_000;
 
 export async function getBookByIsbn13(isbn13: string) {
   const { data, error } = await supabase
-    .from("books")
+    .from("book")
     .select("*")
     .eq("isbn13", isbn13)
     .maybeSingle<BookRow>();
@@ -51,7 +51,7 @@ export async function ensureBookStub(isbn13: string) {
   if (existing) return existing;
 
   const { data, error } = await supabase
-    .from("books")
+    .from("book")
     .insert({ isbn13 })
     .select()
     .single<BookRow>();
@@ -79,7 +79,7 @@ export async function upsertKakaoBook(isbn13: string, payload: KakaoBookUpsertPa
       };
 
   const { data, error } = await supabase
-    .from("books")
+    .from("book")
     .upsert(update, { onConflict: "isbn13" })
     .select()
     .single<BookRow>();
@@ -100,7 +100,7 @@ export async function updateKyoboCategory(isbn13: string, payload: KyoboCategory
     updatePayload.kyobo_fetched_at = nowIso();
   }
 
-  const query = supabase.from("books").upsert(updatePayload, {
+  const query = supabase.from("book").upsert(updatePayload, {
     onConflict: "isbn13",
   });
 
@@ -111,7 +111,7 @@ export async function updateKyoboCategory(isbn13: string, payload: KyoboCategory
 
 export async function upsertKyoboRawPayload(isbn13: string, raw: KyoboRawPayload, scrapedAt?: string) {
   const { error } = await supabase
-    .from("books_kyobo_raw")
+    .from("book_kyobo_raw")
     .upsert(
       {
         isbn13,
@@ -126,7 +126,7 @@ export async function upsertKyoboRawPayload(isbn13: string, raw: KyoboRawPayload
 
 export async function markKyoboFetchAttempt(isbn13: string) {
   const { error } = await supabase
-    .from("books")
+    .from("book")
     .update({ kyobo_fetched_at: nowIso(), updated_at: nowIso() })
     .eq("isbn13", isbn13);
 
@@ -157,7 +157,7 @@ export function shouldFetchKyoboCategory(book: BookRow | null, now = Date.now())
 
 export async function upsertKyoboUrlOnly(isbn13: string, kyoboUrl: string) {
   const { data, error } = await supabase
-    .from("books")
+    .from("book")
     .upsert(
       {
         isbn13,

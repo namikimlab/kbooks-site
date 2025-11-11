@@ -23,7 +23,7 @@ This is a Next.js 15 App Router project focused on a social reading/list platfor
 - `/api/...`: serverless route handlers (Supabase CRUD, external fetch proxies, cover/thumb endpoints, list order updates, etc.). Key routes:
   - `/api/user-lists`: create lists.
   - `/api/user-lists/[id]`: get/update/delete individual lists.
-  - `/api/user-lists/[id]/positions`: new endpoint that resets and rewrites `user_list_books.position` for reordering.
+  - `/api/user-lists/[id]/positions`: new endpoint that resets and rewrites `user_list_book.position` for reordering.
   - `/api/fetch-*`, `/api/thumbs/[isbn]`, etc.: book data acquisition.
 
 ## src/components
@@ -40,8 +40,12 @@ Grouped into subfolders:
 - Utility helpers (`lib/utils.ts` exports `cn`, etc.) and Tailwind/global CSS definitions.
 
 ## Cross-cutting behaviors
+- List detail page now includes cover collage, owner controls, draggable/touch order (ListBooksList), list edit route mirrors create page, and `/api/user-lists/[id]/positions` resets+rewrites positions.
+- Likes/Reads tabs share icon-based view toggles, privacy filter fills width on mobile, pagination uses 30 items/page, and user interactions show toast feedback.
+- Profile edit form uses client-side component with handle/nickname/bio/link validation, limits stored in constants, and server route enforces same rules.
+- Supabase table names renamed (book_like, book, book_kyobo_raw, user_list, user_list_book, user_read) and MAX_BOOKS_PER_LIST constant governs list cap everywhere.
 - Auth: Supabase client on both server (`createSupabaseServerClient`) and client (`createSupabaseBrowserClient`) ensures gated routes (lists/profile edit, reordering) validate ownership.
-- Data: Supabase tables `books`, `user_lists`, `user_list_books`, `book_likes`, `user_read`, etc. Most server components fetch directly via server client.
+- Data: Supabase tables `books`, `user_list`, `user_list_book`, `book_like`, `user_read`, etc. Most server components fetch directly via server client.
 - UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
 
 ## Design Principles

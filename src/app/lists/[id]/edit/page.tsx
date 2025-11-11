@@ -27,7 +27,7 @@ export default async function EditListPage({ params }: { params: EditPageParams 
   const supabase = await createSupabaseServerClient();
   const [{ data: list, error: listError }, authResult] = await Promise.all([
     supabase
-      .from("user_lists")
+      .from("user_list")
       .select("id, title, description, is_public, user_id")
       .eq("id", id)
       .maybeSingle<ListRow>(),

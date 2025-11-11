@@ -43,7 +43,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
 
           try {
             const { data: existingLike, error: likeErr } = await supabase
-              .from("book_likes")
+              .from("book_like")
               .select("user_id")
               .eq("user_id", user.id)
               .eq("isbn13", isbn13)
@@ -69,7 +69,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
 
         try {
           const { count, error: countErr } = await supabase
-            .from("book_likes")
+            .from("book_like")
             .select("isbn13", { count: "exact", head: true })
             .eq("isbn13", isbn13);
 
@@ -123,7 +123,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
     if (liked) {
       // unlike (delete row)
       const { error: delErr } = await supabase
-        .from("book_likes")
+        .from("book_like")
         .delete()
         .eq("user_id", userId)
         .eq("isbn13", isbn13);
@@ -139,7 +139,7 @@ export default function LikeButton({ isbn13 }: LikeButtonProps) {
       }
     } else {
       // like (insert row)
-      const { error: insErr } = await supabase.from("book_likes").insert({
+      const { error: insErr } = await supabase.from("book_like").insert({
         user_id: userId,
         isbn13,
       });

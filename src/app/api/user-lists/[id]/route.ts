@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   const { data: list, error } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .select("id, title, description, is_public, updated_at, user_id")
     .eq("id", id)
     .maybeSingle<{
@@ -100,7 +100,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     data: existing,
     error: existingError,
   } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .select("id, user_id")
     .eq("id", id)
     .maybeSingle<{ id: string; user_id: string }>();
@@ -165,7 +165,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   updates.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .update(updates)
     .eq("id", id)
     .select("id, title, description, is_public, updated_at")
@@ -215,7 +215,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     data: existing,
     error: existingError,
   } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .select("id, user_id")
     .eq("id", id)
     .maybeSingle<{ id: string; user_id: string }>();
@@ -234,7 +234,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   }
 
   const { error: membershipDeleteError } = await supabase
-    .from("user_list_books")
+    .from("user_list_book")
     .delete()
     .eq("list_id", id);
 
@@ -243,7 +243,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "리스트를 삭제하지 못했어요." }, { status: 500 });
   }
 
-  const { error: deleteError } = await supabase.from("user_lists").delete().eq("id", id);
+  const { error: deleteError } = await supabase.from("user_list").delete().eq("id", id);
 
   if (deleteError) {
     console.error(`[user-lists:delete] failed to delete list id=${id}`, deleteError);

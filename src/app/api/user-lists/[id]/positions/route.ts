@@ -36,7 +36,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     data: list,
     error: listError,
   } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .select("id, user_id")
     .eq("id", id)
     .maybeSingle<{ id: string; user_id: string }>();
@@ -80,7 +80,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     data: membershipRows,
     error: membershipError,
   } = await supabase
-    .from("user_list_books")
+    .from("user_list_book")
     .select("isbn13")
     .eq("list_id", id);
 
@@ -97,7 +97,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 
   const { error: clearError } = await supabase
-    .from("user_list_books")
+    .from("user_list_book")
     .update({ position: null })
     .eq("list_id", id);
 
@@ -107,7 +107,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 
   const { error: updateError } = await supabase
-    .from("user_list_books")
+    .from("user_list_book")
     .upsert(
       updates.map(item => ({
         list_id: id,

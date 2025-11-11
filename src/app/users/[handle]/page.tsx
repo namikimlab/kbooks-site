@@ -29,8 +29,8 @@ type ProfileSearchParams = {
   readsView?: string;
 };
 
-const LIKE_PAGE_SIZE = 12;
-const READ_PAGE_SIZE = 12;
+const LIKE_PAGE_SIZE = 30;
+const READ_PAGE_SIZE = 30;
 
 type BookLikeRow = {
   isbn13: string;
@@ -303,7 +303,7 @@ async function fetchUserLikes({
 
   const [{ count: likesCount, error: likesCountError }, initialPageResult] = await Promise.all([
     supabase
-      .from("book_likes")
+      .from("book_like")
       .select("isbn13", { count: "exact", head: true })
       .eq("user_id", userId),
     fetchLikesPage({ supabase, userId, page: normalizedPage }),
@@ -348,7 +348,7 @@ async function fetchUserLikes({
 
   if (isbnList.length > 0) {
     const { data, error } = await supabase
-      .from("books")
+      .from("book")
       .select("isbn13, title, author")
       .in("isbn13", isbnList);
 
@@ -392,7 +392,7 @@ function fetchLikesPage({
   const to = from + LIKE_PAGE_SIZE - 1;
 
   return supabase
-    .from("book_likes")
+    .from("book_like")
     .select<BookLikeRow>("isbn13, liked_at")
     .eq("user_id", userId)
     .order("liked_at", { ascending: false })
@@ -470,7 +470,7 @@ async function fetchUserReads({
 
   if (isbnList.length > 0) {
     const { data, error } = await supabase
-      .from("books")
+      .from("book")
       .select("isbn13, title, author")
       .in("isbn13", isbnList);
 
@@ -540,7 +540,7 @@ async function fetchUserLists({
   includePrivate: boolean;
 }): Promise<UserListSummary[]> {
   const listQuery = supabase
-    .from("user_lists")
+    .from("user_list")
     .select<UserListRow>("id, title, description, is_public, updated_at, created_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
@@ -562,7 +562,7 @@ async function fetchUserLists({
   let membershipRows: UserListBookRow[] = [];
   if (listIds.length > 0) {
     const { data: membershipData, error: membershipError } = await supabase
-      .from("user_list_books")
+      .from("user_list_book")
       .select<UserListBookRow>("list_id, isbn13, added_at")
       .in("list_id", listIds)
       .order("added_at", { ascending: true });

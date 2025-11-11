@@ -64,7 +64,7 @@ export default async function UserListDetailPage({
 
   const [{ data: list, error: listError }, authResult] = await Promise.all([
     supabase
-      .from("user_lists")
+      .from("user_list")
       .select<ListRow>("id, title, description, is_public, updated_at, created_at, user_id")
       .eq("id", id)
       .maybeSingle(),
@@ -96,7 +96,7 @@ export default async function UserListDetailPage({
       .eq("id", list.user_id)
       .maybeSingle<OwnerProfileRow>(),
     supabase
-      .from("user_list_books")
+      .from("user_list_book")
       .select("isbn13, position")
       .eq("list_id", list.id)
       .order("position", { ascending: true, nullsFirst: false })
@@ -126,7 +126,7 @@ export default async function UserListDetailPage({
   let booksLookup = new Map<string, BasicBookRow>();
   if (isbnList.length > 0) {
     const { data: bookRows, error: booksError } = await supabase
-      .from("books")
+      .from("book")
       .select<BasicBookRow>("isbn13, title, author")
       .in("isbn13", isbnList);
 

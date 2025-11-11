@@ -117,7 +117,7 @@ export function UserLikesSection({
         }
 
         const { error } = await supabase
-          .from("book_likes")
+          .from("book_like")
           .delete()
           .eq("user_id", user.id)
           .eq("isbn13", isbn13);
@@ -154,7 +154,7 @@ export function UserLikesSection({
       {hasLikes ? (
         <div className="flex flex-wrap items-center gap-3">
           <div className="text-sm text-muted-foreground">
-            {`총 ${totalCount.toLocaleString()}권을 좋아했어요.`}
+            {`총 ${totalCount.toLocaleString()}권을 좋아해요.`}
           </div>
           <div className="inline-flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/40 p-1 ml-[auto] sm:ml-auto">
             {VIEW_OPTIONS.map(option => {

@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   }
 
   const { data, error } = await supabase
-    .from("user_lists")
+    .from("user_list")
     .insert({
       user_id: user.id,
       title,

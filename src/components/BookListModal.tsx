@@ -59,7 +59,7 @@ export default function BookListModal({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("user_lists")
+        .from("user_list")
         .select("id,title,description,is_public,updated_at")
         .eq("user_id", userId)
         .order("updated_at", { ascending: false });
@@ -81,7 +81,7 @@ export default function BookListModal({
       }
 
       const { data: countRows, error: countError } = await supabase
-        .from("user_list_books")
+        .from("user_list_book")
         .select("list_id")
         .in("list_id", listIds);
 
@@ -98,13 +98,13 @@ export default function BookListModal({
       }
 
       const { data: membership, error: membershipError } = await supabase
-        .from("user_list_books")
+        .from("user_list_book")
         .select("list_id")
         .eq("isbn13", isbn13)
         .in("list_id", listIds);
 
       if (membershipError) {
-        console.error("failed to fetch user_list_books", membershipError);
+        console.error("failed to fetch user_list_book", membershipError);
         return;
       }
 
