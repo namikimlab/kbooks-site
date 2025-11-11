@@ -11,7 +11,8 @@ const WEBHOOK_SECRET = getOptionalServerEnv("KBOOKS_WEBHOOK_SECRET") ?? "";
 const APIFY_TOKEN = getOptionalServerEnv("APIFY_TOKEN") ?? "";
 
 type DatasetItem = Record<string, unknown>;
-type BreadcrumbEntry = string | { text?: string; title?: string; name?: string };
+type BreadcrumbLeaf = { text?: string; title?: string; name?: string };
+type BreadcrumbEntry = string | BreadcrumbLeaf;
 
 function sanitizeCategories(value: unknown) {
   if (!Array.isArray(value)) return null;
@@ -23,7 +24,7 @@ function sanitizeCategories(value: unknown) {
       continue;
     }
     if (entry && typeof entry === "object") {
-      const item = entry as BreadcrumbEntry;
+      const item = entry as BreadcrumbLeaf;
       const maybe =
         item.text?.trim() ?? item.title?.trim() ?? item.name?.trim() ?? "";
       if (maybe) unique.add(maybe);
