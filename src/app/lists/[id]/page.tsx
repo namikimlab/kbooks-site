@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { ListBooksList } from "@/components/lists/ListBooksList";
 import { ListCoverCollage } from "@/components/lists/ListCoverCollage";
 import { ListShareButton } from "@/components/lists/ListShareButton";
+import { ListLikeProvider, ListLikeToggle } from "@/components/lists/ListLikeToggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { BookRow } from "@/lib/books";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClients";
 import { cn } from "@/lib/utils";
-import { Pencil } from "lucide-react";
+import { Pencil, BookOpen, Lock, Unlock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,9 @@ type DisplayBook = {
 
 type BasicBookRow = Pick<BookRow, "isbn13" | "title" | "author">;
 
+const META_ITEM_CLASS =
+  "inline-flex items-center gap-2 text-xs font-medium text-muted-foreground whitespace-nowrap";
+
 export default async function UserListDetailPage({
   params,
   searchParams,
@@ -79,7 +83,8 @@ export default async function UserListDetailPage({
     notFound();
   }
 
-  const isOwner = authResult.data.user?.id === list.user_id;
+  const viewerId = authResult.data.user?.id ?? null;
+  const isOwner = viewerId === list.user_id;
   const isPublic = Boolean(list.is_public);
 
   if (!isOwner && !isPublic) {
@@ -89,6 +94,7 @@ export default async function UserListDetailPage({
   const [
     { data: ownerProfile, error: ownerError },
     { data: membershipRows, error: membershipError },
+    { count: likesCountRaw, error: likesCountError },
   ] = await Promise.all([
     supabase
       .from("user_profile")
@@ -101,6 +107,10 @@ export default async function UserListDetailPage({
       .eq("list_id", list.id)
       .order("position", { ascending: true, nullsFirst: false })
       .order("isbn13", { ascending: true }),
+    supabase
+      .from("user_list_like")
+      .select("list_id", { count: "exact", head: true })
+      .eq("list_id", list.id),
   ]);
 
   if (ownerError) {
@@ -111,12 +121,33 @@ export default async function UserListDetailPage({
     console.error(`[list-detail] failed to fetch books for list id=${list.id}`, membershipError);
   }
 
+  if (likesCountError) {
+    console.error(`[list-detail] failed to fetch likes count for list id=${list.id}`, likesCountError);
+  }
+
   const owner: OwnerProfileRow = ownerProfile ?? {
     id: list.user_id,
     handle: "unknown",
     nickname: "사용자",
     avatar_url: null,
   };
+
+  const likesCount = likesCountRaw ?? 0;
+
+  let viewerLiked = false;
+  if (viewerId) {
+    const { data: likedRow, error: likedError } = await supabase
+      .from("user_list_like")
+      .select("user_id")
+      .eq("list_id", list.id)
+      .eq("user_id", viewerId)
+      .maybeSingle();
+    if (likedError) {
+      console.error(`[list-detail] failed to fetch viewer like state for list id=${list.id}`, likedError);
+    } else {
+      viewerLiked = Boolean(likedRow);
+    }
+  }
 
   const orderedRows = (membershipRows ?? []).filter(
     (row): row is { isbn13: string; position: number | null } => Boolean(row.isbn13)
@@ -149,7 +180,12 @@ export default async function UserListDetailPage({
 
   const bookCount = books.length;
   return (
-    <section className="mx-auto max-w-6xl">
+    <ListLikeProvider
+      listId={list.id}
+      initialLiked={viewerLiked}
+      initialCount={likesCount}
+    >
+      <section className="mx-auto px-2 py-4 pb-24 max-w-6xl">
       <header className="space-y-4">
         <ListCoverCollage isbnList={books.map(book => book.isbn13)} />
         <div className="space-y-3">
@@ -164,8 +200,8 @@ export default async function UserListDetailPage({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
+        <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={owner.avatar_url ?? undefined} alt={`${owner.handle} 아바타`} />
               <AvatarFallback>{ownerInitials(owner)}</AvatarFallback>
             </Avatar>
@@ -181,53 +217,67 @@ export default async function UserListDetailPage({
               </p>
             </div>
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="flex flex-shrink-0 items-end gap-4">
             {isOwner ? (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className="rounded-full border border-transparent hover:border-border"
-              >
-                <Link href={`/lists/${list.id}/edit`} aria-label="리스트 편집">
-                  <Pencil className="h-4 w-4" />
-                </Link>
-              </Button>
+              <div className="flex flex-col items-center text-xs text-muted-foreground">
+                <Button
+                  asChild
+                  size="icon"
+                  variant="ghost"
+                  className="h-10 w-10"
+                >
+                  <Link href={`/lists/${list.id}/edit`} aria-label="리스트 편집">
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <span>수정</span>
+              </div>
             ) : null}
-            <ListShareButton title={list.title} />
+            <ListLikeToggle variant="indicator" />
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <span>{bookCount.toLocaleString()}권 포함</span>
-          <span className="text-xs text-border">●</span>
+        <div className="mb-6 flex w-full flex-wrap items-center gap-6 text-sm text-muted-foreground sm:gap-8">
+          <span className={META_ITEM_CLASS}>
+            <BookOpen className="h-4 w-4" aria-hidden />
+            {`${bookCount.toLocaleString()}권 포함`}
+          </span>
+          <span className="text-border text-xs mx-1 sm:mx-2">|</span>
           <ListVisibilityBadge isPublic={isPublic} />
+          <span className="text-border text-xs mx-1 sm:mx-2">|</span>
+          <ListShareButton title={list.title} variant="inline" className={META_ITEM_CLASS} />
         </div>
       </header>
 
-      <div className="my-8 h-px w-full bg-border/70" />
+      <div className="my-6 h-px w-full bg-border/70" />
 
       {bookCount === 0 ? (
         <EmptyListBooksState isOwner={isOwner} />
       ) : (
         <ListBooksList listId={list.id} books={books} isOwner={isOwner} />
       )}
+
+      <ListLikeFloatingButton />
     </section>
+  </ListLikeProvider>
   );
 }
 
 function ListVisibilityBadge({ isPublic }: { isPublic: boolean }) {
+  const Icon = isPublic ? Unlock : Lock;
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-        isPublic
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
-          : "border-amber-500/40 bg-amber-500/10 text-amber-700"
-      )}
-    >
+    <span className={META_ITEM_CLASS}>
+      <Icon className="h-4 w-4" aria-hidden />
       {isPublic ? "공개" : "비공개"}
     </span>
+  );
+}
+
+function ListLikeFloatingButton() {
+  return (
+    <div className="sticky bottom-0 z-30 mt-10 px-4 pb-1.5 sm:px-6 sm:pb-2">
+      <ListLikeToggle variant="cta" />
+    </div>
   );
 }
 

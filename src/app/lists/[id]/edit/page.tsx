@@ -55,7 +55,7 @@ export default async function EditListPage({ params }: { params: EditPageParams 
   const detailHref = `/lists/${list.id}`;
 
   return (
-    <section className="mx-auto max-w-2xl">
+    <section className="mx-auto px-2 py-2 max-w-2xl">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold leading-tight">리스트 편집</h1>
         <div className="space-y-1 text-sm text-muted-foreground">

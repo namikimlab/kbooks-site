@@ -3,6 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     dangerouslyAllowSVG: true,
+    localPatterns: [
+      {
+        pathname: "/api/thumbs/**",
+      },
+      {
+        pathname: "/api/covers/**",
+      },
+    ],
     remotePatterns: [
       { protocol: "http",  hostname: "www.nl.go.kr", pathname: "/**" }, 
       { protocol: "https", hostname: "www.nl.go.kr", pathname: "/**" },

@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils";
 
 type ListShareButtonProps = {
   title: string;
+  variant?: "icon" | "inline";
+  className?: string;
 };
 
-export function ListShareButton({ title }: ListShareButtonProps) {
+export function ListShareButton({ title, variant = "icon", className }: ListShareButtonProps) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,23 +88,48 @@ export function ListShareButton({ title }: ListShareButtonProps) {
     }
   }, [shareUrl, showMessage, title]);
 
+  const isInline = variant === "inline";
+
+  const inlineButton = (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      aria-label="리스트 공유"
+    >
+      <Share2 className="h-4 w-4" />
+      <span>공유</span>
+    </button>
+  );
+
+  const iconButton = (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      onClick={handleShare}
+      aria-label="리스트 공유"
+      className="rounded-full border border-transparent hover:border-border"
+    >
+      <Share2 className="h-4 w-4" />
+    </Button>
+  );
+
   return (
-    <div className="relative">
-      <Button
-        type="button"
-        size="icon"
-        variant="ghost"
-        onClick={handleShare}
-        aria-label="리스트 공유"
-        className="rounded-full border border-transparent hover:border-border"
-      >
-        <Share2 className="h-4 w-4" />
-      </Button>
+    <div
+      className={cn(
+        "relative",
+        isInline ? "inline-flex items-center" : undefined,
+        className
+      )}
+    >
+      {isInline ? inlineButton : iconButton}
       {message ? (
         <div
           role="status"
           className={cn(
-            "absolute right-0 top-full mt-2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium shadow-sm",
+            "absolute top-full mt-2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium shadow-sm",
+            isInline ? "left-1/2 -translate-x-1/2" : "right-0",
             status === "success"
               ? "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/40"
               : "bg-destructive/10 text-destructive ring-1 ring-destructive/40"
