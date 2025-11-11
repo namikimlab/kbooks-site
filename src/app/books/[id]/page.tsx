@@ -149,7 +149,7 @@ export default async function BookDetailPage({
   }
 
   const display = toDisplay(book);
-  const kyoboUnavailable = !!book.kyobo_fetched_at && !book.kyobo_url;
+  const kyoboUnavailable = Boolean(book?.kyobo_fetched_at) && !book?.kyobo_url;
   const hasPrimaryData =
     !!display.title ||
     display.authors.length > 0 ||

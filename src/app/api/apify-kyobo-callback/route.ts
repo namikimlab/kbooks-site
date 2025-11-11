@@ -12,7 +12,6 @@ const APIFY_TOKEN = getOptionalServerEnv("APIFY_TOKEN") ?? "";
 
 type DatasetItem = Record<string, unknown>;
 type BreadcrumbLeaf = { text?: string; title?: string; name?: string };
-type BreadcrumbEntry = string | BreadcrumbLeaf;
 
 function sanitizeCategories(value: unknown) {
   if (!Array.isArray(value)) return null;
