@@ -15,7 +15,7 @@ export function ListCoverCollage({ isbnList }: ListCoverCollageProps) {
       <div className="w-36 sm:w-40">
         <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-border/50 bg-background shadow-md shadow-foreground/5">
           <Image
-            src={`/api/thumbs/${firstIsbn}`}
+            src={`/api/thumbs/${firstIsbn}?v=inline`}
             alt="리스트 대표 표지"
             fill
             sizes="(max-width: 640px) 60vw, 200px"

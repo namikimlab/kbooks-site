@@ -382,7 +382,7 @@ function ReadsList({
             >
               <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                 <Image
-                  src={`/api/thumbs/${book.isbn13}`}
+                  src={`/api/thumbs/${book.isbn13}?v=inline`}
                   alt={book.title ?? "책 표지"}
                   fill
                   sizes="48px"
@@ -462,7 +462,7 @@ function ReadsCoverGrid({
               <div className="relative overflow-hidden rounded-xl bg-muted shadow-sm">
                 <div className="relative aspect-[2/3] w-full">
                   <Image
-                    src={`/api/thumbs/${book.isbn13}`}
+                    src={`/api/thumbs/${book.isbn13}?v=inline`}
                     alt={book.title ?? "책 표지"}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 20vw, 200px"

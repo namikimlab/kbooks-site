@@ -39,7 +39,7 @@ export function UserListsSection({
               <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                 {list.coverIsbn13 ? (
                   <Image
-                    src={`/api/thumbs/${list.coverIsbn13}`}
+                    src={`/api/thumbs/${list.coverIsbn13}?v=inline`}
                     alt={`${list.title} 대표 표지`}
                     fill
                     sizes="48px"

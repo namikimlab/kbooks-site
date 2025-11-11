@@ -19,12 +19,12 @@ This is a Next.js 15 App Router project focused on a social reading/list platfor
 - `/lists/[id]/edit/page.tsx`: edit UI for title/description/visibility; protected via Supabase auth.
 - `/users/[handle]/page.tsx`: profile hub with tabs for activity, likes, reads, lists. Renders summary components from `src/components/users`.
 - `/profile/edit/page.tsx`: profile editing form.
-- `/search/page.tsx`: Kakao-powered search listing.
+- `/search/page.tsx`: Kakao-powered search listing. Server component trims `q`, short-circuits when empty, then calls `kakaoSearch` (Redis-cached fetch against Kakao API, 30 results per page, no Supabase reads) to render paginated cards linking to `/books/[isbn13]`.
 - `/api/...`: serverless route handlers (Supabase CRUD, external fetch proxies, cover/thumb endpoints, list order updates, etc.). Key routes:
   - `/api/user-lists`: create lists.
   - `/api/user-lists/[id]`: get/update/delete individual lists.
   - `/api/user-lists/[id]/positions`: new endpoint that resets and rewrites `user_list_book.position` for reordering.
-  - `/api/fetch-*`, `/api/thumbs/[isbn]`, etc.: book data acquisition.
+- `/api/fetch-*`, `/api/thumbs/[isbn]`, etc.: book data acquisition.
 
 ## src/components
 Grouped into subfolders:
@@ -47,6 +47,7 @@ Grouped into subfolders:
 - Auth: Supabase client on both server (`createSupabaseServerClient`) and client (`createSupabaseBrowserClient`) ensures gated routes (lists/profile edit, reordering) validate ownership.
 - Data: Supabase tables `books`, `user_list`, `user_list_book`, `book_like`, `user_read`, etc. Most server components fetch directly via server client.
 - UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
+- Cover delivery: Components request `/api/thumbs/[isbn]`, which streams Supabase Storage covers when present, otherwise proxies Kakao's thumbnail or, as a final step, serves an inline SVG that renders “표지 없음” so every card still gets a legible placeholder.
 
 ## Design Principles
 - **Minimal + Modular:** prefer small, composable components, API handlers, and helpers. Avoid over-engineering—each module should do one job clearly.

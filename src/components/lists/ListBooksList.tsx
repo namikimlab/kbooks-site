@@ -173,7 +173,7 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                 >
                   <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-background">
                     <Image
-                      src={`/api/thumbs/${book.isbn13}`}
+                      src={`/api/thumbs/${book.isbn13}?v=inline`}
                       alt={book.title ?? "책 표지"}
                       fill
                       sizes="80px"

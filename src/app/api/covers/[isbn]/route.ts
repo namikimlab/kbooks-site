@@ -24,29 +24,21 @@ function isKyoboPlaceholderHashOnly(bytes: Uint8Array): { yes: boolean; reason: 
   return { yes: false, reason: "none" };
 }
 
-async function servePlaceholderBytes(req: Request) {
-  const origin = new URL(req.url).origin;
-  const r = await fetch(`${origin}/placeholder-cover.jpg`, { cache: "force-cache" });
-  if (r.ok) {
-    const ab = await r.arrayBuffer();
-    return new NextResponse(Buffer.from(ab), {
-      headers: {
-        "Content-Type": r.headers.get("content-type") || "image/jpeg",
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "X-Image-Source": "placeholder",
-      },
-    });
-  }
-  // last resort 1x1 PNG
-  const tiny = Uint8Array.from([
-    137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,6,0,0,0,31,21,196,137,
-    0,0,0,13,73,68,65,84,120,156,99,0,1,0,0,5,0,1,13,10,44,179,0,0,0,0,73,69,78,68,174,66,96,130
-  ]);
-  return new NextResponse(Buffer.from(tiny), {
+const PLACEHOLDER_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="360" height="540" viewBox="0 0 120 180">
+    <rect width="120" height="180" rx="8" fill="#f4f4f5"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" fill="#a1a1aa">
+      표지 없음
+    </text>
+  </svg>
+`;
+
+async function servePlaceholderBytes() {
+  return new NextResponse(Buffer.from(PLACEHOLDER_SVG.trim()), {
     headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=86400",
-      "X-Image-Source": "placeholder-transparent",
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Image-Source": "inline-placeholder",
     },
   });
 }
@@ -97,7 +89,7 @@ export async function GET(
 
       if (yes) {
         // Placeholder -> serve app placeholder (DO NOT upload)
-        const ph = await servePlaceholderBytes(req);
+        const ph = await servePlaceholderBytes();
         // ASCII-only header values (no arrows or non-ASCII)
         ph.headers.set("X-Image-Source", "kyobo-placeholder-to-app-placeholder");
         ph.headers.set("X-Placeholder-Reason", reason);
@@ -139,7 +131,7 @@ export async function GET(
   }
 
   // 3) Fallback -> app placeholder
-  const ph = await servePlaceholderBytes(req);
+  const ph = await servePlaceholderBytes();
   ph.headers.set("X-Image-Source", "fallback-placeholder");
   return ph;
 }
