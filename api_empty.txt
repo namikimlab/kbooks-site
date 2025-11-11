@@ -1,0 +1,1 @@
+cb({"data":{"returnCode":1,"totalSize":0,"realSize":0,"errorMessage":null,"resultDocuments":[]},"resultCode":"200","resultMessage":"Search Success","detailMessage":"자동완성 상품 검색 결과를 가져왔습니다."});

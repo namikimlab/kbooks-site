@@ -149,6 +149,7 @@ export default async function BookDetailPage({
   }
 
   const display = toDisplay(book);
+  const kyoboUnavailable = !!book.kyobo_fetched_at && !book.kyobo_url;
   const hasPrimaryData =
     !!display.title ||
     display.authors.length > 0 ||
@@ -188,7 +189,11 @@ export default async function BookDetailPage({
             {display.publishYear ? ` · ${display.publishYear}` : ""}
           </div>
           <BookActionButtons isbn13={isbn13} kyoboUrl={display.kyoboUrl} />
-          {display.description?.trim() ? (
+          {kyoboUnavailable ? (
+            <p className="mt-4 text-sm leading-relaxed text-foreground/90 max-w-prose">
+              판매 정보가 없어요.
+            </p>
+          ) : display.description?.trim() ? (
             <BookDescription text={display.description} />
           ) : (
             <p className="mt-4 text-sm leading-relaxed text-foreground/90 max-w-prose">
@@ -196,22 +201,23 @@ export default async function BookDetailPage({
             </p>
           )}
 
-          {display.category && display.category.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {display.category.map(cat => (
-                <span
-                  key={cat}
-                  className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
-                >
-                  {cat}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-6 text-sm text-muted-foreground">
-              🚧 태그 수집 중이에요.
-            </div>
-          )}
+          {!kyoboUnavailable &&
+            (display.category && display.category.length > 0 ? (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {display.category.map(cat => (
+                  <span
+                    key={cat}
+                    className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 text-sm text-muted-foreground">
+                🚧 태그 수집 중이에요.
+              </div>
+            ))}
         </div>
       </section>
     </section>

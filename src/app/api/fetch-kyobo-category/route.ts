@@ -106,6 +106,9 @@ export async function GET(req: Request) {
     console.warn("[fetch-kyobo-category] skipping trigger due to missing Kyobo URL", {
       isbn13,
     });
+    await markKyoboFetchAttempt(isbn13).catch(err => {
+      console.error("[fetch-kyobo-category] failed to mark kyobo attempt", err);
+    });
     return NextResponse.json(
       { status: "skipped", reason: "missing-kyobo-url" },
       { status: 202 },

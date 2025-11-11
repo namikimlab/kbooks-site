@@ -144,9 +144,12 @@ export function needsKakaoEnrichment(book: BookRow | null) {
 export function shouldFetchKyoboCategory(book: BookRow | null, now = Date.now()) {
   if (!book) return true;
 
+  const kyoboUnavailable = !!book.kyobo_fetched_at && !book.kyobo_url;
+  if (kyoboUnavailable) return false;
+
   const noCategory = !book.category || book.category.length === 0;
   const noFetchedAt = !book.kyobo_fetched_at;
-  
+
   if (noCategory || noFetchedAt) return true;
 
   const fetchedAt = Date.parse(book.kyobo_fetched_at);
