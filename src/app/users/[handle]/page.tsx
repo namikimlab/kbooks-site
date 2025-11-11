@@ -171,7 +171,7 @@ export default async function UserProfilePage({
   };
 
   return (
-    <section className="mx-auto max-w-3xl">
+    <section className="mx-auto py-4 max-w-3xl">
       <div className="flex flex-col items-center gap-4 text-center">
         <Avatar className="size-28">
           {profile.avatar_url ? (

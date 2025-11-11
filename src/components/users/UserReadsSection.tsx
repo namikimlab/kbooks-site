@@ -104,8 +104,6 @@ export function UserReadsSection({
 
   const showSkeleton = isRefreshing;
 
-  const filterActive = isOwner && privacyFilter !== "all";
-
   useEffect(() => {
     if (!toast) return;
     const timeout = setTimeout(() => setToast(null), 2200);
@@ -208,11 +206,6 @@ export function UserReadsSection({
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-sm text-muted-foreground">
               {`총 ${totalCount.toLocaleString()}권을 읽었어요.`}
-              {filterActive && (
-                <span className="ml-2 text-xs text-muted-foreground/80">
-                  현재 {privacyFilter === "private" ? "비공개" : "공개"}만 보고 있어요.
-                </span>
-              )}
             </div>
             <div className="inline-flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/40 p-1 sm:ml-auto ml-[auto]">
               {VIEW_OPTIONS.map(option => {
@@ -281,10 +274,7 @@ export function UserReadsSection({
       ) : !hasReads ? (
         <EmptyReadsState isOwner={isOwner} profileNickname={profileNickname} />
       ) : !hasVisibleReads ? (
-        <FilteredReadsEmptyState
-          filter={privacyFilter}
-          onReset={() => setPrivacyFilter("all")}
-        />
+        <FilteredReadsEmptyState filter={privacyFilter} />
       ) : (
         <>
           {view === "list" ? (
@@ -334,24 +324,11 @@ function EmptyReadsState({ isOwner, profileNickname }: { isOwner: boolean; profi
   );
 }
 
-function FilteredReadsEmptyState({
-  filter,
-  onReset,
-}: {
-  filter: "all" | "public" | "private";
-  onReset: () => void;
-}) {
+function FilteredReadsEmptyState({ filter }: { filter: "all" | "public" | "private" }) {
   const label = filter === "private" ? "비공개" : "공개";
   return (
     <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
       <p className="font-medium text-foreground">{label} 기록이 아직 없어요.</p>
-      <button
-        type="button"
-        onClick={onReset}
-        className="mt-3 inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium text-foreground transition hover:bg-muted"
-      >
-        필터 초기화
-      </button>
     </div>
   );
 }
