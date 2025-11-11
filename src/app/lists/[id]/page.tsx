@@ -68,9 +68,9 @@ export default async function UserListDetailPage({
   const [{ data: list, error: listError }, authResult] = await Promise.all([
     supabase
       .from("user_list")
-      .select<ListRow>("id, title, description, is_public, updated_at, created_at, user_id")
+      .select("id, title, description, is_public, updated_at, created_at, user_id")
       .eq("id", id)
-      .maybeSingle(),
+      .maybeSingle<ListRow>(),
     supabase.auth.getUser(),
   ]);
 
@@ -157,13 +157,13 @@ export default async function UserListDetailPage({
   if (isbnList.length > 0) {
     const { data: bookRows, error: booksError } = await supabase
       .from("book")
-      .select<BasicBookRow>("isbn13, title, author")
+      .select("isbn13, title, author")
       .in("isbn13", isbnList);
 
     if (booksError) {
       console.error(`[list-detail] failed to fetch book metadata for list id=${list.id}`, booksError);
     } else if (bookRows) {
-      booksLookup = new Map(bookRows.map(row => [row.isbn13, row]));
+      booksLookup = new Map(bookRows.map(row => [row.isbn13, row as BasicBookRow]));
     }
   }
 

@@ -46,6 +46,14 @@ async function createUserListRequest(payload: {
 }
 
 export default function CreateListPage() {
+  return (
+    <React.Suspense fallback={<section className="mx-auto max-w-2xl py-10 text-sm text-muted-foreground">폼을 불러오는 중입니다…</section>}>
+      <CreateListForm />
+    </React.Suspense>
+  );
+}
+
+function CreateListForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

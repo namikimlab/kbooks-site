@@ -52,7 +52,7 @@ export async function ensureBookStub(isbn13: string) {
 
   const { data, error } = await supabase
     .from("book")
-    .insert({ isbn13 })
+    .insert([{ isbn13 }] as never)
     .select()
     .single<BookRow>();
 
@@ -80,7 +80,7 @@ export async function upsertKakaoBook(isbn13: string, payload: KakaoBookUpsertPa
 
   const { data, error } = await supabase
     .from("book")
-    .upsert(update, { onConflict: "isbn13" })
+    .upsert(update as never, { onConflict: "isbn13" })
     .select()
     .single<BookRow>();
 
@@ -100,7 +100,7 @@ export async function updateKyoboCategory(isbn13: string, payload: KyoboCategory
     updatePayload.kyobo_fetched_at = nowIso();
   }
 
-  const query = supabase.from("book").upsert(updatePayload, {
+  const query = supabase.from("book").upsert(updatePayload as never, {
     onConflict: "isbn13",
   });
 
@@ -117,7 +117,7 @@ export async function upsertKyoboRawPayload(isbn13: string, raw: KyoboRawPayload
         isbn13,
         payload: raw,
         scraped_at: scrapedAt ?? nowIso(),
-      },
+      } as never,
       { onConflict: "isbn13" }
     );
 
@@ -127,7 +127,7 @@ export async function upsertKyoboRawPayload(isbn13: string, raw: KyoboRawPayload
 export async function markKyoboFetchAttempt(isbn13: string) {
   const { error } = await supabase
     .from("book")
-    .update({ kyobo_fetched_at: nowIso(), updated_at: nowIso() })
+    .update({ kyobo_fetched_at: nowIso(), updated_at: nowIso() } as never)
     .eq("isbn13", isbn13);
 
   if (error) throw error;
@@ -152,7 +152,7 @@ export function shouldFetchKyoboCategory(book: BookRow | null, now = Date.now())
 
   if (noCategory || noFetchedAt) return true;
 
-  const fetchedAt = Date.parse(book.kyobo_fetched_at);
+  const fetchedAt = Date.parse(book.kyobo_fetched_at ?? "");
   if (Number.isNaN(fetchedAt)) return true;
 
   return now - fetchedAt > DAY_MS;
@@ -166,7 +166,7 @@ export async function upsertKyoboUrlOnly(isbn13: string, kyoboUrl: string) {
         isbn13,
         kyobo_url: kyoboUrl,
         updated_at: nowIso(),
-      },
+      } as never,
       { onConflict: "isbn13" }
     )
     .select()

@@ -12,17 +12,14 @@ const serverOptions = {
   },
 } as const;
 
-export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
+export function createSupabaseServerClient() {
   return createServerComponentClient({
-    cookies: () => cookieStore,
-    options: serverOptions,
+    cookies,
   });
 }
 
 export function createSupabaseRouteHandlerClient() {
   return createRouteHandlerClient({
     cookies,
-    options: serverOptions,
   });
 }

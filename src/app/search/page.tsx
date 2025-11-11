@@ -6,15 +6,6 @@ import { kakaoSearch } from "@/lib/kakaoSearch";
 
 type Props = { searchParams: Promise<{ q?: string; page?: string }> };
 
-type Book = {
-  isbn13: string;
-  title: string | null;
-  authors?: string[] | null;
-  publisher?: string | null;
-  thumbnail?: string | null;
-  datetime?: string | null;
-};
-
 export default async function SearchPage({ searchParams }: Props) {
   const { q = "", page = "1" } = await searchParams;
   const query = q.trim();
@@ -31,6 +22,21 @@ export default async function SearchPage({ searchParams }: Props) {
 
   // ✅ Kakao API with pagination (no Supabase)
   const { documents = [], meta } = await kakaoSearch(query, currentPage, pageSize);
+  const normalizedDocs = documents.map(doc => {
+    if ("isbn13" in doc) {
+      return doc;
+    }
+    const isbn13 = doc?.isbn ?? "";
+    return {
+      isbn13,
+      isbn10: null,
+      title: doc?.title ?? null,
+      authors: doc?.authors ?? null,
+      publisher: doc?.publisher ?? null,
+      thumbnail: doc?.thumbnail ?? null,
+      datetime: doc?.datetime ?? null,
+    };
+  });
   const totalCount = meta?.pageable_count ?? documents.length;
   const isEnd = meta?.is_end ?? true;
   const totalPages = Math.min(50, Math.ceil(totalCount / pageSize)); // Kakao limit
@@ -42,14 +48,14 @@ export default async function SearchPage({ searchParams }: Props) {
         검색어: “{query}” · {totalCount}건
       </p>
 
-      {documents.length === 0 ? (
+      {normalizedDocs.length === 0 ? (
         <div className="mt-6 text-sm text-muted-foreground">
           일치하는 책이 없습니다.
         </div>
       ) : (
         <>
           <ul className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7">
-            {documents.map((b: Book, index: number) => {
+            {normalizedDocs.map((b, index) => {
               const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
               const isAboveFoldCandidate = index < 4; // Preload images likely visible on initial viewport
               return (

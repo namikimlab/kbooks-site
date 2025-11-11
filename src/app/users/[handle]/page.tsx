@@ -43,15 +43,6 @@ type BookReadRow = {
   is_private: boolean | null;
 };
 
-type UserListRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  is_public: boolean | null;
-  updated_at: string | null;
-  created_at: string | null;
-};
-
 type UserListBookRow = {
   list_id: string;
   isbn13: string | null;
@@ -313,7 +304,7 @@ async function fetchUserLikes({
     console.error("[user-profile] failed to count likes", likesCountError);
   }
 
-  let likesRows: BookLikeRow[] = initialPageResult.data ?? [];
+  let likesRows: BookLikeRow[] = (initialPageResult.data as BookLikeRow[]) ?? [];
   if (initialPageResult.error) {
     console.error("[user-profile] failed to fetch likes page", initialPageResult.error);
   }
@@ -339,7 +330,7 @@ async function fetchUserLikes({
     if (fallbackResult.error) {
       console.error("[user-profile] failed to fetch fallback likes page", fallbackResult.error);
     } else {
-      likesRows = fallbackResult.data ?? [];
+      likesRows = (fallbackResult.data as BookLikeRow[]) ?? [];
     }
   }
 
@@ -378,7 +369,7 @@ async function fetchUserLikes({
   };
 }
 
-function fetchLikesPage({
+async function fetchLikesPage({
   supabase,
   userId,
   page,
@@ -393,7 +384,7 @@ function fetchLikesPage({
 
   return supabase
     .from("book_like")
-    .select<BookLikeRow>("isbn13, liked_at")
+    .select("isbn13, liked_at")
     .eq("user_id", userId)
     .order("liked_at", { ascending: false })
     .range(from, to);
@@ -434,7 +425,7 @@ async function fetchUserReads({
     console.error("[user-profile] failed to count reads", readsCountError);
   }
 
-  let readRows: BookReadRow[] = initialPageResult.data ?? [];
+  let readRows: BookReadRow[] = (initialPageResult.data as BookReadRow[]) ?? [];
   if (initialPageResult.error) {
     console.error("[user-profile] failed to fetch reads page", initialPageResult.error);
   }
@@ -461,7 +452,7 @@ async function fetchUserReads({
     if (fallbackResult.error) {
       console.error("[user-profile] failed to fetch fallback reads page", fallbackResult.error);
     } else {
-      readRows = fallbackResult.data ?? [];
+      readRows = (fallbackResult.data as BookReadRow[]) ?? [];
     }
   }
 
@@ -518,7 +509,7 @@ function fetchReadsPage({
 
   const query = supabase
     .from("user_read")
-    .select<BookReadRow>("isbn13, read_at, is_private")
+    .select("isbn13, read_at, is_private")
     .eq("user_id", userId)
     .order("read_at", { ascending: false })
     .range(from, to);
@@ -541,7 +532,7 @@ async function fetchUserLists({
 }): Promise<UserListSummary[]> {
   const listQuery = supabase
     .from("user_list")
-    .select<UserListRow>("id, title, description, is_public, updated_at, created_at")
+    .select("id, title, description, is_public, updated_at, created_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -563,7 +554,7 @@ async function fetchUserLists({
   if (listIds.length > 0) {
     const { data: membershipData, error: membershipError } = await supabase
       .from("user_list_book")
-      .select<UserListBookRow>("list_id, isbn13, added_at")
+      .select("list_id, isbn13, added_at")
       .in("list_id", listIds)
       .order("added_at", { ascending: true });
 

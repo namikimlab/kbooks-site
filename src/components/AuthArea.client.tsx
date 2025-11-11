@@ -65,25 +65,29 @@ export default function AuthArea() {
 
     let cancelled = false;
 
-    supabase
-      .from("user_profile")
-      .select("handle, nickname, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle<ProfileRow>()
-      .then(({ data, error }) => {
+    async function loadProfile(currentUser: User) {
+      try {
+        const { data, error } = await supabase
+          .from("user_profile")
+          .select("handle, nickname, avatar_url")
+          .eq("id", currentUser.id)
+          .maybeSingle<ProfileRow>();
+
         if (error) {
           console.error("[auth-area] failed to fetch profile", error);
         }
         if (!cancelled) {
           setProfile(data ?? null);
         }
-      })
-      .catch(err => {
+      } catch (err) {
         if (!cancelled) {
           console.error("[auth-area] unexpected profile fetch error", err);
           setProfile(null);
         }
-      });
+      }
+    }
+
+    void loadProfile(user);
 
     return () => {
       cancelled = true;
