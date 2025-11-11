@@ -1,72 +1,33 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type BookDescriptionProps = {
-  text: string | null | undefined;
+  text: string;
 };
 
-const FALLBACK_TEXT = "소개 정보가 아직 없습니다.";
+const TOGGLE_THRESHOLD = 240;
 
 export default function BookDescription({ text }: BookDescriptionProps) {
-  const normalized = useMemo(() => text?.trim() ?? "", [text]);
-  const isFallback = normalized.length === 0;
+  const displayText = useMemo(() => text.trim(), [text]);
   const [expanded, setExpanded] = useState(false);
-  const [hasOverflow, setHasOverflow] = useState(false);
-  const paragraphRef = useRef<HTMLParagraphElement>(null);
+  const showToggle = displayText.length > TOGGLE_THRESHOLD;
 
-  useEffect(() => {
-    setExpanded(false);
-  }, [normalized]);
-
-  useLayoutEffect(() => {
-    if (isFallback) {
-      setHasOverflow(false);
-      return;
-    }
-
-    if (expanded) {
-      setHasOverflow(true);
-      return;
-    }
-
-    const el = paragraphRef.current;
-    if (!el) return;
-
-    const checkOverflow = () => {
-      const overflow = el.scrollHeight - el.clientHeight > 1;
-      setHasOverflow(overflow);
-    };
-
-    checkOverflow();
-
-    if (typeof ResizeObserver === "function") {
-      const observer = new ResizeObserver(checkOverflow);
-      observer.observe(el);
-      return () => observer.disconnect();
-    }
-  }, [normalized, expanded, isFallback]);
-
-  const showToggle = !isFallback && hasOverflow;
+  if (!displayText) {
+    return null;
+  }
 
   return (
-    <div className="mt-4 w-full max-w-prose text-sm text-foreground/90">
-      <p
-        ref={paragraphRef}
-        className={cn(
-          "whitespace-pre-line leading-relaxed",
-          !isFallback && !expanded && "line-clamp-5"
-        )}
-      >
-        {isFallback ? FALLBACK_TEXT : normalized}
+    <div className="mt-4 max-w-prose text-sm text-foreground/90">
+      <p className={cn("leading-relaxed whitespace-pre-line", !expanded && "line-clamp-5")}>
+        {displayText}
       </p>
-
       {showToggle && (
         <button
           type="button"
           onClick={() => setExpanded(prev => !prev)}
-          className="mt-2 text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+          className="mt-2 text-xs font-medium text-primary hover:underline"
         >
           {expanded ? "접기" : "더보기"}
         </button>

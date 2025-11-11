@@ -1,7 +1,7 @@
 // app/books/[id]/page.tsx
+import CoverImage from "@/components/CoverImage";
 import BookActionButtons from "@/components/BookActionButtons";
 import BookDescription from "@/components/BookDescription";
-import CoverImage from "@/components/CoverImage";
 import {
   BookRow,
   ensureBookStub,
@@ -168,7 +168,7 @@ export default async function BookDetailPage({
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4">
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
         <div className="flex justify-center md:block">
           <div className="w-full max-w-[360px]">
@@ -188,7 +188,13 @@ export default async function BookDetailPage({
             {display.publishYear ? ` · ${display.publishYear}` : ""}
           </div>
           <BookActionButtons isbn13={isbn13} />
-          <BookDescription text={display.description} />
+          {display.description?.trim() ? (
+            <BookDescription text={display.description} />
+          ) : (
+            <p className="mt-4 text-sm leading-relaxed text-foreground/90 max-w-prose">
+              소개 정보가 아직 없습니다.
+            </p>
+          )}
 
           {display.category && display.category.length > 0 ? (
             <div className="mt-6 flex flex-wrap gap-2">
