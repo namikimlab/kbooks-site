@@ -12,6 +12,17 @@ export default function LoginPage() {
 
   const showEmailForm = false; // keep magic-link option for future use
 
+  const buildRedirectUrl = () => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (siteUrl && siteUrl.length > 0) {
+      return `${siteUrl.replace(/\/$/, "")}/auth/callback`;
+    }
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/auth/callback`;
+    }
+    return "/auth/callback";
+  };
+
   async function handleKakaoLogin() {
     try {
       setIsKakaoLoading(true);
@@ -19,7 +30,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "kakao",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: buildRedirectUrl(),
         },
       });
       if (error) {
@@ -43,7 +54,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: buildRedirectUrl(),
       },
     });
 
