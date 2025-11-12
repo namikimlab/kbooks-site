@@ -11,5 +11,20 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(new URL("/", request.url));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  const { data: profile } = await supabase
+    .from("user_profile")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const destination = profile ? "/" : "/onboarding";
+  return NextResponse.redirect(new URL(destination, request.url));
 }
