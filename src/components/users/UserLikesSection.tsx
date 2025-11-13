@@ -227,8 +227,8 @@ function EmptyLikesState({ isOwner, profileNickname }: { isOwner: boolean; profi
     <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
       {isOwner ? (
         <>
-          <p className="font-medium text-foreground">아직 좋아요한 책이 없어요.</p>
-          <p className="mt-2">마음에 드는 책을 찾아 &lsquo;좋아요&rsquo;를 눌러보세요.</p>
+          <p className="font-medium text-foreground">아직 좋아한 책이 없어요.</p>
+          <p className="mt-2">마음에 드는 책을 찾아 응원해 보세요.</p>
         </>
       ) : (
         <p>{profileNickname}님이 아직 공개한 좋아요가 없어요.</p>

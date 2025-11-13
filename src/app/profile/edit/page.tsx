@@ -13,6 +13,7 @@ type ProfileRow = {
   bio: string | null;
   avatar_url: string | null;
   link_url: string | null;
+  updated_at: string | null;
 };
 
 type SearchParams = Promise<{ error?: string }>;
@@ -33,6 +34,27 @@ function buildInitials(value: string | null | undefined) {
 }
 
 const AVATAR_BUCKET = "profile-avatars";
+const HANDLE_MIN_LENGTH = 3;
+const HANDLE_MAX_LENGTH = 24;
+const NICKNAME_MIN_LENGTH = 2;
+const NICKNAME_MAX_LENGTH = 32;
+const LINK_MAX_LENGTH = 255;
+const RESERVED_HANDLES = new Set([
+  "admin",
+  "root",
+  "support",
+  "kbooks",
+  "api",
+  "login",
+  "signup",
+  "profile",
+  "users",
+  "about",
+  "contact",
+  "settings",
+  "lists",
+]);
+const RATE_LIMIT_MS = 5000;
 
 async function upsertProfile(formData: FormData) {
   "use server";
@@ -53,18 +75,65 @@ async function upsertProfile(formData: FormData) {
   const avatarFile = formData.get("avatar_file");
   const linkUrlInput = formData.get("link_url");
 
-  const handle = handleInput ? String(handleInput).trim() : "";
-  const nickname = nicknameInput ? String(nicknameInput).trim() : "";
+  const handleRaw = handleInput ? String(handleInput).trim() : "";
+  const nicknameRaw = nicknameInput ? String(nicknameInput).trim() : "";
   const bio = bioInput ? String(bioInput).trim() : "";
 
-  if (!handle || !nickname) {
-    redirect(`/profile/edit?error=${encodeURIComponent("닉네임과 핸들을 모두 입력해주세요.")}`);
+  if (!handleRaw || !nicknameRaw) {
+    redirect(`/profile/edit?error=${encodeURIComponent("닉네임과 프로필 주소를 모두 입력해주세요.")}`);
   }
 
-  if (!/^[a-z0-9._-]+$/i.test(handle)) {
+  const handle = handleRaw.toLowerCase();
+
+  if (
+    handle.length < HANDLE_MIN_LENGTH ||
+    handle.length > HANDLE_MAX_LENGTH ||
+    !/^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(handle)
+  ) {
     redirect(
       `/profile/edit?error=${encodeURIComponent(
-        "핸들은 영문, 숫자, 점(.), 밑줄(_), 하이픈(-)만 사용할 수 있어요."
+        `프로필 주소는 ${HANDLE_MIN_LENGTH}~${HANDLE_MAX_LENGTH}자의 영문·숫자로 시작하고 끝나야 하며, 가운데에만 ., _, - 를 사용할 수 있어요.`
+      )}`
+    );
+  }
+
+  if (RESERVED_HANDLES.has(handle)) {
+    redirect(
+      `/profile/edit?error=${encodeURIComponent(
+        "사용할 수 없는 프로필 주소예요. 다른 주소를 입력해 주세요."
+      )}`
+    );
+  }
+
+  const nickname = nicknameRaw.replace(/\s+/g, " ").trim();
+
+  if (nickname.length < NICKNAME_MIN_LENGTH || nickname.length > NICKNAME_MAX_LENGTH) {
+    redirect(
+      `/profile/edit?error=${encodeURIComponent(
+        `표시 이름은 ${NICKNAME_MIN_LENGTH}~${NICKNAME_MAX_LENGTH}자 이내로 입력해 주세요.`
+      )}`
+    );
+  }
+
+  if (!/^[\p{L}\p{N}\s._-]+$/u.test(nickname)) {
+    redirect(
+      `/profile/edit?error=${encodeURIComponent(
+        "표시 이름에는 한글, 영문, 숫자, 공백, ., _, - 만 사용할 수 있어요."
+      )}`
+    );
+  }
+
+  const { data: conflictingHandle } = await supabase
+    .from("user_profile")
+    .select("id")
+    .eq("handle", handle)
+    .neq("id", user.id)
+    .maybeSingle<{ id: string }>();
+
+  if (conflictingHandle) {
+    redirect(
+      `/profile/edit?error=${encodeURIComponent(
+        "이미 사용 중인 프로필 주소에요. 다른 주소를 입력해 주세요."
       )}`
     );
   }
@@ -74,22 +143,56 @@ async function upsertProfile(formData: FormData) {
   if (linkUrlInput) {
     const linkCandidate = String(linkUrlInput).trim();
     if (linkCandidate.length > 0) {
-      if (!/^https?:\/\//i.test(linkCandidate)) {
+      if (linkCandidate.length > LINK_MAX_LENGTH) {
         redirect(
           `/profile/edit?error=${encodeURIComponent(
-            "링크는 http:// 또는 https:// 로 시작해야 해요."
+            `링크는 ${LINK_MAX_LENGTH}자 이내로 입력해 주세요.`
           )}`
         );
       }
-      normalizedLinkUrl = linkCandidate;
+      try {
+        const parsed = new URL(linkCandidate);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          redirect(
+            `/profile/edit?error=${encodeURIComponent(
+              "링크는 http:// 또는 https:// 로 시작해야 해요."
+            )}`
+          );
+        }
+        if (!parsed.hostname) {
+          redirect(
+            `/profile/edit?error=${encodeURIComponent(
+              "유효한 웹사이트 주소를 입력해 주세요."
+            )}`
+          );
+        }
+        normalizedLinkUrl = parsed.toString();
+      } catch {
+        redirect(
+          `/profile/edit?error=${encodeURIComponent(
+            "유효한 웹사이트 주소를 입력해 주세요."
+          )}`
+        );
+      }
     }
   }
 
   const { data: existingProfile } = await supabase
     .from("user_profile")
-    .select("handle, avatar_url")
+    .select("handle, avatar_url, updated_at")
     .eq("id", user.id)
-    .maybeSingle<{ handle: string; avatar_url: string | null }>();
+    .maybeSingle<{ handle: string; avatar_url: string | null; updated_at: string | null }>();
+
+  if (existingProfile?.updated_at) {
+    const lastUpdated = Date.parse(existingProfile.updated_at);
+    if (!Number.isNaN(lastUpdated) && Date.now() - lastUpdated < RATE_LIMIT_MS) {
+      redirect(
+        `/profile/edit?error=${encodeURIComponent(
+          "프로필을 너무 자주 수정하고 있어요. 잠시 후 다시 시도해 주세요."
+        )}`
+      );
+    }
+  }
 
   let resolvedAvatarUrl = existingProfile?.avatar_url ?? null;
 
@@ -104,7 +207,7 @@ async function upsertProfile(formData: FormData) {
     if (!allowedMimeTypes.includes(avatarFile.type)) {
       redirect(
         `/profile/edit?error=${encodeURIComponent(
-          "JPEG, PNG, WEBP, GIF 형식의 이미지 파일만 업로드할 수 있어요."
+          "지원되지 않는 파일 형식이에요. JPEG, PNG, WEBP, GIF 중 하나를 선택해 주세요."
         )}`
       );
     }
@@ -112,7 +215,7 @@ async function upsertProfile(formData: FormData) {
     if (avatarFile.size > maxFileSize) {
       redirect(
         `/profile/edit?error=${encodeURIComponent(
-          "이미지 크기는 최대 1.5MB까지 지원해요. 파일 크기를 줄인 후 다시 시도해주세요."
+          "이미지 크기가 1.5MB를 넘어요. 파일 크기를 줄이거나 더 작은 이미지를 다시 업로드해 주세요."
         )}`
       );
     }
@@ -137,14 +240,22 @@ async function upsertProfile(formData: FormData) {
 
       if (uploadError) {
         console.error("[profile-edit] avatar upload failed", uploadError);
-        redirect(`/profile/edit?error=${encodeURIComponent("이미지 업로드에 실패했어요. 다시 시도해주세요.")}`);
+        redirect(
+          `/profile/edit?error=${encodeURIComponent(
+            "이미지를 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
+          )}`
+        );
       }
 
       const { data: publicUrlData } = storage.storage.from(AVATAR_BUCKET).getPublicUrl(objectPath);
       resolvedAvatarUrl = publicUrlData.publicUrl;
     } catch (err) {
       console.error("[profile-edit] unexpected avatar upload error", err);
-      redirect(`/profile/edit?error=${encodeURIComponent("이미지 업로드 중 문제가 발생했어요.")}`);
+      redirect(
+        `/profile/edit?error=${encodeURIComponent(
+          "이미지를 업로드하는 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요."
+        )}`
+      );
     }
   }
 
@@ -173,7 +284,7 @@ async function upsertProfile(formData: FormData) {
     await revalidatePath(`/users/${existingProfile.handle}`);
   }
 
-  redirect(`/users/${handle}`);
+  redirect(`/users/${handle}?profileUpdated=1`);
 }
 
 export default async function ProfileEditPage({
@@ -194,7 +305,7 @@ export default async function ProfileEditPage({
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profile")
-    .select("handle, nickname, bio, avatar_url, link_url")
+    .select("handle, nickname, bio, avatar_url, link_url, updated_at")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>();
 
@@ -202,7 +313,7 @@ export default async function ProfileEditPage({
     console.error("[profile-edit] failed to load profile", profileError);
   }
 
-  const initialHandle = profile?.handle ? sanitizeText(profile.handle) : "";
+  const initialHandle = profile?.handle ? sanitizeText(profile.handle).toLowerCase() : "";
   const initialNickname =
     sanitizeText(profile?.nickname) ||
     sanitizeText((user.user_metadata?.full_name as string | undefined) ?? null) ||

@@ -315,7 +315,10 @@ function EmptyReadsState({ isOwner, profileNickname }: { isOwner: boolean; profi
       {isOwner ? (
         <>
           <p className="font-medium text-foreground">아직 기록한 읽은 책이 없어요.</p>
-          <p className="mt-2">읽은 책을 기록하면 여기에 모일 거예요. 비공개 옵션도 지원해요.</p>
+          <p className="mt-2">
+            읽은 책을 기록하면 여기에 모일 거예요. <br />
+            비공개로 표시해 나만 볼 수도 있어요.
+          </p>
         </>
       ) : (
         <p>{profileNickname}님이 공개한 읽은 책이 아직 없어요.</p>

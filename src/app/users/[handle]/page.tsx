@@ -27,6 +27,7 @@ type ProfileSearchParams = {
   likesView?: string;
   readsPage?: string;
   readsView?: string;
+  profileUpdated?: string;
 };
 
 const LIKE_PAGE_SIZE = 30;
@@ -113,12 +114,14 @@ export default async function UserProfilePage({
   const initials = initialsFromProfile(profile);
   const bio = profile.bio?.trim();
 
+  const showProfileUpdatedToast = search?.profileUpdated === "1";
   const normalizedSearchParams: Record<string, string> = {};
   for (const [key, value] of Object.entries(search ?? {})) {
     if (typeof value === "string") {
       normalizedSearchParams[key] = value;
     }
   }
+  delete normalizedSearchParams.profileUpdated;
 
   const {
     likedBooks,
@@ -162,7 +165,8 @@ export default async function UserProfilePage({
   };
 
   return (
-    <section className="mx-auto py-4 max-w-3xl">
+    <>
+      <section className="mx-auto py-4 max-w-3xl">
       <div className="flex flex-col items-center gap-4 text-center">
         <Avatar className="size-28">
           {profile.avatar_url ? (
@@ -273,7 +277,15 @@ export default async function UserProfilePage({
           </TabsContent>
         </Tabs>
       </div>
-    </section>
+      </section>
+      {showProfileUpdatedToast ? (
+        <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+          <div className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-emerald-50 shadow-lg shadow-emerald-500/40">
+            프로필이 저장됐어요.
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 

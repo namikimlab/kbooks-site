@@ -7,11 +7,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const HANDLE_MAX = 30;
-const HANDLE_REGEX = /^[a-zA-Z0-9._]+$/;
-const NICKNAME_MAX = 30;
+const HANDLE_MIN = 3;
+const HANDLE_MAX = 24;
+const HANDLE_REGEX = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/;
+const RESERVED_HANDLES = new Set([
+  "admin",
+  "root",
+  "support",
+  "kbooks",
+  "api",
+  "login",
+  "signup",
+  "profile",
+  "users",
+  "about",
+  "contact",
+  "settings",
+  "lists",
+]);
+const NICKNAME_MIN = 2;
+const NICKNAME_MAX = 32;
 const BIO_MAX = 150;
-const LINK_MAX = 100;
+const LINK_MAX = 255;
 
 type ProfileEditFormProps = {
   action: (formData: FormData) => Promise<void>;
@@ -36,21 +53,29 @@ export function ProfileEditForm({
   initialLinkUrl,
   errorMessage,
 }: ProfileEditFormProps) {
-  const [handle, setHandle] = useState(initialHandle);
+  const [handle, setHandle] = useState(initialHandle.toLowerCase());
   const [nickname, setNickname] = useState(initialNickname);
   const [bio, setBio] = useState(initialBio);
   const [linkUrl, setLinkUrl] = useState(initialLinkUrl);
 
   const handleError = useMemo(() => {
     if (!handle.trim()) return "핸들을 입력해주세요.";
+    if (handle.length < HANDLE_MIN) return `핸들은 최소 ${HANDLE_MIN}자 이상이어야 해요.`;
     if (handle.length > HANDLE_MAX) return `핸들은 최대 ${HANDLE_MAX}자까지 작성할 수 있어요.`;
-    if (!HANDLE_REGEX.test(handle)) return "영문, 숫자, 밑줄(_), 마침표(.)만 사용할 수 있어요.";
+    if (!HANDLE_REGEX.test(handle)) {
+      return "영문·숫자로 시작하고 끝나야 하며, 가운데에만 ., _, - 를 사용할 수 있어요.";
+    }
+    if (RESERVED_HANDLES.has(handle)) return "사용할 수 없는 프로필 주소예요.";
     return null;
   }, [handle]);
 
   const nicknameError = useMemo(() => {
     if (!nickname.trim()) return "표시 이름을 입력해주세요.";
+    if (nickname.length < NICKNAME_MIN)
+      return `표시 이름은 최소 ${NICKNAME_MIN}자 이상이어야 해요.`;
     if (nickname.length > NICKNAME_MAX) return `표시 이름은 최대 ${NICKNAME_MAX}자까지 작성할 수 있어요.`;
+    if (!/^[\p{L}\p{N}\s._-]+$/u.test(nickname))
+      return "한글, 영문, 숫자, 공백, ., _, - 만 사용할 수 있어요.";
     return null;
   }, [nickname]);
 
@@ -92,10 +117,10 @@ export function ProfileEditForm({
             id="handle"
             name="handle"
             value={handle}
-            onChange={event => setHandle(event.target.value)}
+            onChange={event => setHandle(event.target.value.toLowerCase())}
             required
             autoComplete="off"
-            minLength={2}
+            minLength={HANDLE_MIN}
             maxLength={HANDLE_MAX}
             placeholder="예: booklover"
             aria-invalid={Boolean(handleError)}
