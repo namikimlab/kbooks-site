@@ -157,76 +157,44 @@ export default function BookListButton({ isbn13, className }: BookListButtonProp
     previousIds: string[];
   }) => {
     try {
-      const prevSet = new Set(previousIds);
-      const nextSet = new Set(nextIds);
+      const response = await fetch("/api/user-list-memberships", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isbn13, nextIds, previousIds }),
+        credentials: "same-origin",
+      });
 
-      let toAdd = nextIds.filter(id => !prevSet.has(id));
-      const toRemove = previousIds.filter(id => !nextSet.has(id));
+      let payload: {
+        addedIds?: string[];
+        removedIds?: string[];
+        limitExceededIds?: string[];
+        error?: string;
+      } = {};
 
-      if (toAdd.length > 0) {
-        const { data: countRows, error: countError } = await supabase
-          .from("user_list_book")
-          .select("list_id")
-          .in("list_id", toAdd);
-
-        if (countError) throw countError;
-
-        const countMap = new Map<string, number>();
-        for (const row of countRows ?? []) {
-          const id = row.list_id as string;
-          if (!id) continue;
-          countMap.set(id, (countMap.get(id) ?? 0) + 1);
-        }
-
-        const filteredAdds = toAdd.filter(listId => {
-          const count = countMap.get(listId) ?? 0;
-          if (count >= MAX_BOOKS_PER_LIST) {
-            return false;
-          }
-          countMap.set(listId, count + 1);
-          return true;
-        });
-
-        if (filteredAdds.length !== toAdd.length) {
-          setToast({
-            message: `리스트는 최대 ${MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.`,
-            variant: "error",
-          });
-        }
-
-        toAdd = filteredAdds;
+      try {
+        payload = (await response.json()) as typeof payload;
+      } catch {
+        payload = {};
       }
 
-      if (toAdd.length === 0 && toRemove.length === 0) {
-        return;
+      if (!response.ok) {
+        const message = payload?.error ?? "리스트 저장에 실패했어요.";
+        setToast({ message, variant: "error" });
+        throw new Error(message);
       }
 
-      if (toAdd.length > 0) {
-        const { error: insertError } = await supabase
-          .from("user_list_book")
-          .upsert(
-            toAdd.map(listId => ({
-              list_id: listId,
-              isbn13,
-            })),
-            { onConflict: "list_id,isbn13" }
-          );
-
-        if (insertError) throw insertError;
-      }
-
-      if (toRemove.length > 0) {
-        const { error: deleteError } = await supabase
-          .from("user_list_book")
-          .delete()
-          .eq("isbn13", isbn13)
-          .in("list_id", toRemove);
-
-        if (deleteError) throw deleteError;
-      }
+      const addedIds = payload?.addedIds ?? [];
+      const removedIds = payload?.removedIds ?? [];
+      const limitExceededIds = payload?.limitExceededIds ?? [];
 
       setSelectedListIds(nextIds);
-      if (toAdd.length > 0 || toRemove.length > 0) {
+
+      if (limitExceededIds.length > 0) {
+        setToast({
+          message: `일부 리스트는 최대 ${MAX_BOOKS_PER_LIST}권까지 담을 수 있어요.`,
+          variant: "error",
+        });
+      } else if (addedIds.length > 0 || removedIds.length > 0) {
         setToast({ message: "리스트에 저장했어요.", variant: "success" });
       }
     } catch (err) {

@@ -13,7 +13,7 @@ type PositionsPayload = {
 };
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const supabase = createSupabaseRouteHandlerClient();
+  const supabase = await createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error: authError,

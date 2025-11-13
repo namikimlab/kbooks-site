@@ -129,7 +129,7 @@ function CreateListForm() {
   }
 
   return (
-    <section className="mx-auto max-w-2xl">
+    <section className="mx-auto py-4 px-2 max-w-2xl">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold leading-tight">새 리스트 만들기</h1>
         <div className="space-y-1 text-sm text-muted-foreground">

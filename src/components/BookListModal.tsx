@@ -229,7 +229,6 @@ export default function BookListModal({
                     <ListCheckbox
                       key={list.id}
                       title={list.title}
-                      description={list.description}
                       checked={selectedIds.has(list.id)}
                       onChange={() => handleCheckbox(list.id)}
                       disabled={isFull}
@@ -280,7 +279,6 @@ export default function BookListModal({
                       <ListCheckbox
                         key={`all-${list.id}`}
                         title={list.title}
-                        description={list.description}
                         checked={selectedIds.has(list.id)}
                         onChange={() => handleCheckbox(list.id)}
                         disabled={isFull}
@@ -329,13 +327,12 @@ export default function BookListModal({
 
 type ListCheckboxProps = {
   title: string;
-  description: string | null;
   checked: boolean;
   onChange: () => void;
   disabled?: boolean;
 };
 
-function ListCheckbox({ title, description, checked, onChange, disabled }: ListCheckboxProps) {
+function ListCheckbox({ title, checked, onChange, disabled }: ListCheckboxProps) {
   return (
     <label
       className={cn(
@@ -351,17 +348,16 @@ function ListCheckbox({ title, description, checked, onChange, disabled }: ListC
         disabled={disabled}
         className="mt-1 h-4 w-4 accent-primary"
       />
-      <span>
-        <span className="font-medium text-foreground">{title}</span>
-        {description ? (
-          <span className="mt-1 block text-xs text-muted-foreground">{description}</span>
-        ) : null}
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-foreground leading-snug line-clamp-2 break-words">
+          {title}
+        </p>
         {disabled ? (
-          <span className="mt-1 block text-[11px] text-amber-700">
+          <p className="mt-1 text-[11px] text-amber-700">
             최대 {MAX_BOOKS_PER_LIST}권 제한
-          </span>
+          </p>
         ) : null}
-      </span>
+      </div>
     </label>
   );
 }
