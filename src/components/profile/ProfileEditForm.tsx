@@ -29,6 +29,8 @@ const NICKNAME_MIN = 2;
 const NICKNAME_MAX = 32;
 const BIO_MAX = 150;
 const LINK_MAX = 255;
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const AVATAR_MAX_BYTES = 1.5 * 1024 * 1024; // 1.5MB
 
 type ProfileEditFormProps = {
   action: (formData: FormData) => Promise<void>;
@@ -57,6 +59,7 @@ export function ProfileEditForm({
   const [nickname, setNickname] = useState(initialNickname);
   const [bio, setBio] = useState(initialBio);
   const [linkUrl, setLinkUrl] = useState(initialLinkUrl);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const handleError = useMemo(() => {
     if (!handle.trim()) return "핸들을 입력해주세요.";
@@ -91,7 +94,26 @@ export function ProfileEditForm({
     return null;
   }, [linkUrl]);
 
-  const isFormValid = !handleError && !nicknameError && !bioError && !linkError;
+  const isFormValid = !handleError && !nicknameError && !bioError && !linkError && !avatarError;
+
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setAvatarError(null);
+      return;
+    }
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setAvatarError("지원되지 않는 파일 형식이에요. JPEG, PNG, WEBP, GIF 중 하나를 선택해 주세요.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setAvatarError("이미지 크기가 1.5MB를 넘어요. 더 작은 이미지를 다시 업로드해 주세요.");
+      event.target.value = "";
+      return;
+    }
+    setAvatarError(null);
+  }
 
   return (
     <div className="space-y-6 rounded-2xl border border-border/70 bg-background/80 p-6 shadow-sm">
@@ -182,10 +204,6 @@ export function ProfileEditForm({
               )}
             </Avatar>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <label className="block">
-                <span className="sr-only">새 아바타 업로드</span>
-                <Input id="avatar_file" name="avatar_file" type="file" accept="image/*" />
-              </label>
               <p>새 이미지를 업로드하면 자동으로 교체돼요.</p>
               {initialAvatarUrl ? (
                 <label className="flex items-center gap-2 text-xs">
@@ -193,6 +211,18 @@ export function ProfileEditForm({
                   <span>현재 이미지를 제거할게요.</span>
                 </label>
               ) : null}
+              <label className="block">
+                <span className="sr-only">새 아바타 업로드</span>
+                <Input
+                  id="avatar_file"
+                  name="avatar_file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleAvatarChange}
+                />
+              </label>
+              <p className="text-xs">JPEG, PNG, WEBP, GIF / 최대 1.5MB</p>
+              {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
             </div>
           </div>
         </div>

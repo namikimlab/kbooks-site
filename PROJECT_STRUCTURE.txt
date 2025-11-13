@@ -8,17 +8,18 @@ This is a Next.js 15 App Router project focused on a social reading/list platfor
 - `components.json`: shadcn-style component generator metadata.
 - `README.md`: default Next.js boilerplate.
 - `todo.md` / `kb.txt`: ad-hoc local notes.
-- `public/`: static assets (SVG logos, `placeholder-cover.jpg` fallback cover).
+- `public/`: static assets (SVG logos, `placeholder-cover.jpg` fallback cover, `avatar-fallback.svg` default profile image).
 
 ## src/app (Next.js App Router)
 - `layout.tsx`: global layout, wraps all pages.
 - `page.tsx`: landing/home page.
 - `/books/[id]/page.tsx`: book detail page; fetches book metadata, triggers background enrichment, renders `BookActionButtons`.
 - `/lists/new/page.tsx`: client form for creating lists (title/description/visibility) via `/api/user-lists`.
-- `/lists/[id]/page.tsx`: server-rendered list detail—title, owner info, orderable book list, edit/share controls. Uses `ListBooksList` for drag/touch reordering via `/api/user-lists/[id]/positions`.
+- `/lists/[id]/page.tsx`: server-rendered list detail—title, owner info, orderable book list, edit/share controls. Uses `ListBooksList` for drag/touch reordering via `/api/user-lists/[id]/positions` and now surfaces list-like controls (inline heart indicator + sticky CTA) backed by `user_list_like`.
 - `/lists/[id]/edit/page.tsx`: edit UI for title/description/visibility; protected via Supabase auth.
 - `/users/[handle]/page.tsx`: profile hub with tabs for activity, likes, reads, lists. Renders summary components from `src/components/users`.
-- `/profile/edit/page.tsx`: profile editing form.
+- `/profile/edit/page.tsx`: profile editing form. Strict server-side validation keeps handles lowercase and unique, blocks reserved words, enforces rate limiting, validates nickname/link constraints, and sanitizes avatar uploads (type + ≤1.5 MB). After saving, redirects back to the profile page with a toast flag.
+- `/onboarding/page.tsx`: fallback onboarding flow (currently skipped because Kakao/Supabase populate `user_profile` automatically) that can generate default nicknames/avatars.
 - `/search/page.tsx`: Kakao-powered search listing. Server component trims `q`, short-circuits when empty, then calls `kakaoSearch` (Redis-cached fetch against Kakao API, 30 results per page, no Supabase reads) to render paginated cards linking to `/books/[isbn13]`.
 - `/api/...`: serverless route handlers (Supabase CRUD, external fetch proxies, cover/thumb endpoints, list order updates, etc.). Key routes:
   - `/api/user-lists`: create lists.
@@ -42,12 +43,13 @@ Grouped into subfolders:
 ## Cross-cutting behaviors
 - List detail page now includes cover collage, owner controls, draggable/touch order (ListBooksList), list edit route mirrors create page, and `/api/user-lists/[id]/positions` resets+rewrites positions.
 - Likes/Reads tabs share icon-based view toggles, privacy filter fills width on mobile, pagination uses 30 items/page, and user interactions show toast feedback.
-- Profile edit form uses client-side component with handle/nickname/bio/link validation, limits stored in constants, and server route enforces same rules.
+- Profile edit experience: client form mirrors server constraints (handle length, reserved words, nickname limits, link parsing) and redirects to the public profile with a toast (“프로필이 저장됐어요”) once the server-side upsert succeeds.
+- Login flow: `/login` now prioritizes Kakao OAuth (environment-aware redirect) while keeping the email magic-link form hidden for future use. `/auth/callback` exchanges codes via Supabase, then sends new users to `/onboarding` only if they lack a `user_profile`.
 - Supabase table names renamed (book_like, book, book_kyobo_raw, user_list, user_list_book, user_read) and MAX_BOOKS_PER_LIST constant governs list cap everywhere.
 - Auth: Supabase client on both server (`createSupabaseServerClient`) and client (`createSupabaseBrowserClient`) ensures gated routes (lists/profile edit, reordering) validate ownership.
 - Data: Supabase tables `books`, `user_list`, `user_list_book`, `book_like`, `user_read`, etc. Most server components fetch directly via server client.
 - UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
-- Cover delivery: Components request `/api/thumbs/[isbn]`, which streams Supabase Storage covers when present, otherwise proxies Kakao's thumbnail or, as a final step, serves an inline SVG that renders “표지 없음” so every card still gets a legible placeholder.
+- Cover delivery: Components request `/api/thumbs/[isbn]`, which streams Supabase Storage covers when present, otherwise proxies Kakao's thumbnail or serves an inline “표지 없음” SVG fallback. `/api/covers/[isbn]` follows the same cascade, so book/detail pages never render broken images.
 
 ## Design Principles
 - **Minimal + Modular:** prefer small, composable components, API handlers, and helpers. Avoid over-engineering—each module should do one job clearly.

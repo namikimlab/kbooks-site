@@ -43,7 +43,7 @@ const RESERVED_HANDLES = new Set([
   "admin",
   "root",
   "support",
-  "kbooks",
+  "bookpan",
   "api",
   "login",
   "signup",

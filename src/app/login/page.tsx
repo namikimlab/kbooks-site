@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [isSendingLink, setIsSendingLink] = useState(false);
   const [isKakaoLoading, setIsKakaoLoading] = useState(false);
 
-  const showEmailForm = false; // keep magic-link option for future use
+  const showEmailForm = true; // keep magic-link option for future use
 
   const buildRedirectUrl = () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -90,10 +90,13 @@ export default function LoginPage() {
           <p className="mt-1 text-xs text-muted-foreground">원하신다면 이메일 링크 로그인도 사용 가능해요.</p>
           <form onSubmit={handleSendLink} className="mt-4 space-y-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Email</label>
+              <label htmlFor="login-email" className="block text-sm font-medium">
+                Email
+              </label>
               <input
                 type="email"
                 required
+                id="login-email"
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 placeholder="you@example.com"
                 value={email}
