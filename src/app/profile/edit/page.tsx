@@ -35,10 +35,10 @@ function buildInitials(value: string | null | undefined) {
 
 const AVATAR_BUCKET = "profile-avatars";
 const HANDLE_MIN_LENGTH = 3;
-const HANDLE_MAX_LENGTH = 24;
+const HANDLE_MAX_LENGTH = 20;
 const NICKNAME_MIN_LENGTH = 2;
-const NICKNAME_MAX_LENGTH = 32;
-const LINK_MAX_LENGTH = 255;
+const NICKNAME_MAX_LENGTH = 20;
+const LINK_MAX_LENGTH = 200;
 const RESERVED_HANDLES = new Set([
   "admin",
   "root",

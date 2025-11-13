@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [isSendingLink, setIsSendingLink] = useState(false);
   const [isKakaoLoading, setIsKakaoLoading] = useState(false);
 
-  const showEmailForm = true; // keep magic-link option for future use
+  const showEmailForm = false; // keep magic-link option for future use
 
   const buildRedirectUrl = () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
