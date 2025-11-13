@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { UserLikesSection, type UserLikeSummary } from "@/components/users/UserLikesSection";
 import { UserListsSection, type UserListSummary } from "@/components/users/UserListsSection";
+import { UserSavedListsSection } from "@/components/users/UserSavedListsSection";
+import { UserActivitySection } from "@/components/users/UserActivitySection";
 import { UserReadsSection, type UserReadSummary } from "@/components/users/UserReadsSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,20 @@ type UserListBookRow = {
   list_id: string;
   isbn13: string | null;
   added_at: string | null;
+};
+
+type UserListSaveRow = {
+  list_id: string;
+  saved_at: string | null;
+};
+
+type UserListRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  is_public: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 function initialsFromProfile(profile: UserProfile) {
@@ -96,9 +112,12 @@ export default async function UserProfilePage({
 
   const tabCandidate = search?.tab;
   const activeTab =
-    tabCandidate === "likes" || tabCandidate === "lists" || tabCandidate === "reads"
+    tabCandidate === "likes" ||
+    tabCandidate === "reads" ||
+    tabCandidate === "saved" ||
+    tabCandidate === "lists"
       ? tabCandidate
-      : "activity";
+      : "likes";
   const requestedLikesView = search?.likesView === "cover" ? "cover" : "list";
   const requestedLikesPage = Number(search?.likesPage);
   const likesPage = Number.isFinite(requestedLikesPage) && requestedLikesPage > 0
@@ -150,6 +169,13 @@ export default async function UserProfilePage({
     includePrivate: isOwner,
   });
 
+  const savedLists = isOwner
+    ? await fetchSavedLists({
+        supabase,
+        userId: profile.id,
+      })
+    : [];
+
   const likesSearchParams = {
     ...normalizedSearchParams,
     tab: "likes",
@@ -183,6 +209,7 @@ export default async function UserProfilePage({
         </Avatar>
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-foreground">{profile.nickname}</h1>
+          <p className="text-sm font-medium text-muted-foreground">@{profile.handle}</p>
           {bio ? (
             <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
               {bio}
@@ -219,19 +246,18 @@ export default async function UserProfilePage({
         ) : null}
       </div>
 
+      <div className="mt-10 w-full">
+        <UserActivitySection />
+      </div>
+
       <div className="mt-12">
         <Tabs defaultValue={activeTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="activity">나의 활동</TabsTrigger>
             <TabsTrigger value="likes">좋아요</TabsTrigger>
             <TabsTrigger value="reads">읽은 책</TabsTrigger>
-            <TabsTrigger value="lists">리스트</TabsTrigger>
+            <TabsTrigger value="saved">저장한 리스트</TabsTrigger>
+            <TabsTrigger value="lists">내 리스트</TabsTrigger>
           </TabsList>
-          <TabsContent value="activity">
-            <div className="rounded-xl border border-border/70 bg-background/70 p-6 text-sm text-muted-foreground">
-              활동 내역이 준비 중이에요. 곧 다양한 기록을 확인할 수 있어요.
-            </div>
-          </TabsContent>
           <TabsContent value="likes" id="likes">
             <UserLikesSection
               books={likedBooks}
@@ -256,6 +282,13 @@ export default async function UserProfilePage({
               initialSearchParams={readsSearchParams}
               defaultView={requestedReadsView}
               isOwner={isOwner}
+            />
+          </TabsContent>
+          <TabsContent value="saved" id="saved-lists">
+            <UserSavedListsSection
+              lists={savedLists}
+              isOwner={isOwner}
+              profileNickname={profile.nickname}
             />
           </TabsContent>
           <TabsContent value="lists">
@@ -559,9 +592,12 @@ async function fetchUserLists({
     return [];
   }
 
-  const safeListRows = listRows ?? [];
-  const listIds = safeListRows.map(list => list.id);
+  const safeListRows = (listRows ?? []) as UserListRow[];
+  if (safeListRows.length === 0) {
+    return [];
+  }
 
+  const listIds = safeListRows.map(list => list.id);
   let membershipRows: UserListBookRow[] = [];
   if (listIds.length > 0) {
     const { data: membershipData, error: membershipError } = await supabase
@@ -577,6 +613,77 @@ async function fetchUserLists({
     }
   }
 
+  return summarizeLists(safeListRows, membershipRows);
+}
+
+async function fetchSavedLists({
+  supabase,
+  userId,
+}: {
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  userId: string;
+}): Promise<UserListSummary[]> {
+  const { data: saveRows, error: saveError } = await supabase
+    .from("user_list_save")
+    .select("list_id, saved_at")
+    .eq("user_id", userId)
+    .order("saved_at", { ascending: false });
+
+  if (saveError) {
+    console.error("[user-profile] failed to fetch saved lists", saveError);
+    return [];
+  }
+
+  const savedRows = (saveRows ?? []) as UserListSaveRow[];
+  const savedListIds = savedRows.map(row => row.list_id);
+
+  if (savedListIds.length === 0) {
+    return [];
+  }
+
+  const { data: listRows, error: listError } = await supabase
+    .from("user_list")
+    .select("id, title, description, is_public, updated_at, created_at")
+    .in("id", savedListIds)
+    .eq("is_public", true);
+
+  if (listError) {
+    console.error("[user-profile] failed to fetch saved list metadata", listError);
+    return [];
+  }
+
+  const safeListRows = (listRows ?? []).filter(row => row.is_public) as UserListRow[];
+  if (safeListRows.length === 0) {
+    return [];
+  }
+
+  const { data: membershipData, error: membershipError } = await supabase
+    .from("user_list_book")
+    .select("list_id, isbn13, added_at")
+    .in("list_id", safeListRows.map(row => row.id))
+    .order("added_at", { ascending: true });
+
+  let membershipRows: UserListBookRow[] = [];
+  if (membershipError) {
+    console.error("[user-profile] failed to fetch saved list book mappings", membershipError);
+  } else if (membershipData) {
+    membershipRows = membershipData;
+  }
+
+  const summaries = summarizeLists(safeListRows, membershipRows);
+  const orderMap = new Map(savedListIds.map((listId, index) => [listId, index]));
+
+  return summaries.sort((a, b) => {
+    const aIndex = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bIndex = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return aIndex - bIndex;
+  });
+}
+
+function summarizeLists(
+  listRows: UserListRow[],
+  membershipRows: UserListBookRow[]
+): UserListSummary[] {
   const coverMap = new Map<string, { firstIsbn: string | null; count: number }>();
   for (const row of membershipRows) {
     const existing = coverMap.get(row.list_id) ?? { firstIsbn: null, count: 0 };
@@ -587,7 +694,7 @@ async function fetchUserLists({
     coverMap.set(row.list_id, existing);
   }
 
-  return safeListRows.map(row => {
+  return listRows.map(row => {
     const cover = coverMap.get(row.id);
     return {
       id: row.id,

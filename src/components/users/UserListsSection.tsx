@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -16,14 +17,19 @@ type UserListsSectionProps = {
   lists: UserListSummary[];
   isOwner: boolean;
   profileNickname: string;
+  emptyState?: ReactNode;
 };
 
 export function UserListsSection({
   lists,
   isOwner,
   profileNickname,
+  emptyState,
 }: UserListsSectionProps) {
   if (lists.length === 0) {
+    if (emptyState) {
+      return <>{emptyState}</>;
+    }
     return <EmptyListsState isOwner={isOwner} profileNickname={profileNickname} />;
   }
 

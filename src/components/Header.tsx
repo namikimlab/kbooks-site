@@ -16,18 +16,7 @@ export default function Header() {
           className="mx-6 flex flex-1 items-center gap-4 text-sm"
           aria-label="주요 메뉴"
         >
-          <Link
-            href="/weekly"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            -
-          </Link>
-          <Link
-            href="/life-list"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            -
-          </Link>
+          {/* 탐색 메뉴는 나중에 노출 예정 */}
         </nav>
 
         {/* Right side: now purely client-rendered */}

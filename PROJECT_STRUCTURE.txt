@@ -51,6 +51,14 @@ Grouped into subfolders:
 - UI states: Client components manage optimistic updates/toasts (likes, reads, list creation, reordering) and use Next.js routing (`useRouter`, `router.refresh`) for data refetch.
 - Cover delivery: Components request `/api/thumbs/[isbn]`, which streams Supabase Storage covers when present, otherwise proxies Kakao's thumbnail or serves an inline “표지 없음” SVG fallback. `/api/covers/[isbn]` follows the same cascade, so book/detail pages never render broken images.
 
+## Data Flow Details
+- **Search (`/search`)**: Server component grabs `q` and `page`, calls `kakaoSearch`. That helper hits Upstash Redis (`search:{q}:{page}:{size}`) first; on cache miss it fetches Kakao’s book search API, normalizes each document, writes it back to Redis (5‑minute TTL), and returns the list. Cover `<Image>` tags always point to `/api/thumbs/{isbn}` rather than Kakao thumbnails directly.
+- **Thumbnail lookup (`/api/thumbs/[isbn]`)**: The handler first tries Supabase Storage bucket `book-covers/{isbn}.jpg` and streams it if it exists. Otherwise it performs a one-off Kakao lookup, proxies the remote thumbnail back to the client, and only if both fail does it emit an inline SVG placeholder.
+- **Book detail (`/books/[isbn]`)**  
+  - *Book metadata process*: Normalize ISBN to 13 digits, read `book` from Supabase, create a stub if it’s missing, and when key fields (title/author/etc.) are blank run `/api/fetch-kakao?isbn=…` to enrich. That API consults Redis (`kakao:book:{isbn}`) before calling Kakao, then upserts the result back into Supabase so the page can re-render with complete data.  
+  - *Cover image process*: The detail page renders `<CoverImage isbn13={…}>`, which always resolves through `/api/thumbs/{isbn}`. That route attempts Supabase Storage first, falls back to a live Kakao thumbnail proxy, and finally returns an inline SVG placeholder. No direct Kakao URLs are embedded in the page.  
+  - *Category/tag process*: After metadata is ready, the page checks `shouldFetchKyoboCategory`. If categories or `kyobo_fetched_at` are missing/stale, it fire-and-forgets `/api/fetch-kyobo-category?isbn=…`, which scrapes Kyobo, stores raw payloads (`book_kyobo_raw`), and updates `book.category`/`book.kyobo_url`. Render-time tags simply reflect whatever `category` array is stored; while the fetch is in flight the UI shows “태그 수집 중이에요.”
+
 ## Design Principles
 - **Minimal + Modular:** prefer small, composable components, API handlers, and helpers. Avoid over-engineering—each module should do one job clearly.
 - **Straightforward + Safe:** optimize for readability and predictable behavior; include guardrails (auth checks, error handling) so features remain production-ready without unnecessary complexity.

@@ -106,7 +106,11 @@ export default function AuthArea() {
     <div className="ml-auto flex items-center gap-2">
       {isLoggedIn ? (
         <>
-          <Link href={profileUrl} aria-label="내 프로필로 이동" className="focus:outline-none">
+          <Link
+            href={profileUrl}
+            aria-label="내 프로필로 이동"
+            className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+          >
             <Avatar className="size-9 border border-border bg-background transition hover:opacity-90">
               {profile?.avatar_url ? (
                 <AvatarImage
