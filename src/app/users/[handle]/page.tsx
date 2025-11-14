@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { BookRow } from "@/lib/books";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClients";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -128,8 +129,10 @@ export default async function UserProfilePage({
   const readsPage = Number.isFinite(requestedReadsPage) && requestedReadsPage > 0
     ? Math.floor(requestedReadsPage)
     : 1;
+  const requestedListsView = search?.listsView === "saved" ? "saved" : "mine";
 
   const isOwner = userResult.data.user?.id === profile.id;
+  const listsView = isOwner ? requestedListsView : "mine";
   const initials = initialsFromProfile(profile);
   const bio = profile.bio?.trim();
 
@@ -188,6 +191,20 @@ export default async function UserProfilePage({
     tab: "reads",
     readsView: requestedReadsView,
     readsPage: String(readsPageForDisplay),
+  };
+  const listsSearchParamsBase = {
+    ...normalizedSearchParams,
+    tab: "lists",
+  };
+  delete listsSearchParamsBase.listsView;
+  const buildListsViewHref = (view: "mine" | "saved") => {
+    const params = new URLSearchParams(listsSearchParamsBase);
+    if (view === "mine") {
+      params.delete("listsView");
+    } else {
+      params.set("listsView", view);
+    }
+    return `/users/${profile.handle}?${params.toString()}#lists`;
   };
 
   return (
@@ -252,11 +269,10 @@ export default async function UserProfilePage({
 
       <div className="mt-4">
         <Tabs defaultValue={activeTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="likes">좋아요</TabsTrigger>
             <TabsTrigger value="reads">읽은 책</TabsTrigger>
-            <TabsTrigger value="saved">저장한 리스트</TabsTrigger>
-            <TabsTrigger value="lists">내 리스트</TabsTrigger>
+            <TabsTrigger value="lists">리스트</TabsTrigger>
           </TabsList>
           <TabsContent value="likes" id="likes">
             <UserLikesSection
@@ -284,29 +300,63 @@ export default async function UserProfilePage({
               isOwner={isOwner}
             />
           </TabsContent>
-          <TabsContent value="saved" id="saved-lists">
-            <UserSavedListsSection
-              lists={savedLists}
-              isOwner={isOwner}
-              profileNickname={profile.nickname}
-            />
-          </TabsContent>
-          <TabsContent value="lists">
-            <div className="space-y-4">
-              {isOwner && (
-                <Button
-                  asChild
-                  className="w-full justify-center rounded-2xl py-4 text-base font-semibold"
-                >
-                  <Link href={`/lists/new?next=/users/${profile.handle}`}>리스트 만들기</Link>
-                </Button>
-              )}
+          <TabsContent value="lists" id="lists">
+            {isOwner ? (
+              <div className="space-y-6">
+                <div className="flex justify-center">
+                  <div className="inline-flex rounded-full bg-muted/50 p-1 text-xs font-semibold text-muted-foreground sm:text-sm">
+                    {[
+                      { label: "내가 만든 리스트", value: "mine" as const },
+                      { label: "저장한 리스트", value: "saved" as const },
+                    ].map(option => {
+                      const active = listsView === option.value;
+                      return (
+                        <Link
+                          key={option.value}
+                          href={buildListsViewHref(option.value)}
+                          scroll={false}
+                          className={cn(
+                            "rounded-full px-4 py-1.5 transition",
+                            active
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {option.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+                {listsView === "mine" ? (
+                  <div className="space-y-4">
+                    <Button
+                      asChild
+                      className="w-full justify-center rounded-2xl py-4 text-base font-semibold"
+                    >
+                      <Link href={`/lists/new?next=/users/${profile.handle}`}>리스트 만들기</Link>
+                    </Button>
+                    <UserListsSection
+                      lists={userLists}
+                      isOwner
+                      profileNickname={profile.nickname}
+                      showPrivateLock
+                    />
+                  </div>
+                ) : (
+                  <UserSavedListsSection
+                    lists={savedLists}
+                    profileNickname={profile.nickname}
+                  />
+                )}
+              </div>
+            ) : (
               <UserListsSection
                 lists={userLists}
-                isOwner={isOwner}
+                isOwner={false}
                 profileNickname={profile.nickname}
               />
-            </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -18,6 +18,7 @@ type UserListsSectionProps = {
   isOwner: boolean;
   profileNickname: string;
   emptyState?: ReactNode;
+  showPrivateLock?: boolean;
 };
 
 export function UserListsSection({
@@ -25,6 +26,7 @@ export function UserListsSection({
   isOwner,
   profileNickname,
   emptyState,
+  showPrivateLock = false,
 }: UserListsSectionProps) {
   if (lists.length === 0) {
     if (emptyState) {
@@ -59,7 +61,20 @@ export function UserListsSection({
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="text-sm font-semibold leading-snug text-foreground sm:text-base line-clamp-2 break-words">
-                  {list.title}
+                  {showPrivateLock && !list.isPublic ? (
+                    <>
+                      <span
+                        aria-label="비공개 리스트"
+                        title="비공개 리스트"
+                        className="mr-1 text-muted-foreground"
+                      >
+                        🔒
+                      </span>
+                      {list.title}
+                    </>
+                  ) : (
+                    list.title
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground sm:text-sm">
                   {list.bookCount.toLocaleString()}권

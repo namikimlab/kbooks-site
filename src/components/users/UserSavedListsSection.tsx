@@ -2,22 +2,13 @@ import { UserListsSection, type UserListSummary } from "@/components/users/UserL
 
 type UserSavedListsSectionProps = {
   lists: UserListSummary[];
-  isOwner: boolean;
   profileNickname: string;
 };
 
 export function UserSavedListsSection({
   lists,
-  isOwner,
   profileNickname,
 }: UserSavedListsSectionProps) {
-  if (!isOwner) {
-    return (
-      <div className="rounded-2xl border border-border/70 bg-background/60 px-6 py-10 text-center text-sm text-muted-foreground">
-        다른 사용자의 저장한 리스트는 비공개예요.
-      </div>
-    );
-  }
 
   if (lists.length === 0) {
     return (
@@ -27,7 +18,5 @@ export function UserSavedListsSection({
     );
   }
 
-  return (
-    <UserListsSection lists={lists} isOwner={false} profileNickname={profileNickname} />
-  );
+  return <UserListsSection lists={lists} isOwner={false} profileNickname={profileNickname} />;
 }
