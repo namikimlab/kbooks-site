@@ -4,14 +4,19 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-export function createSupabaseServerClient() {
+type ServerClientOptions = Parameters<typeof createServerComponentClient>[0];
+type RouteClientOptions = Parameters<typeof createRouteHandlerClient>[0];
+
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerComponentClient({
-    cookies,
-  });
+    cookies: () => cookieStore,
+  } as ServerClientOptions);
 }
 
-export function createSupabaseRouteHandlerClient() {
+export async function createSupabaseRouteHandlerClient() {
+  const cookieStore = await cookies();
   return createRouteHandlerClient({
-    cookies,
-  });
+    cookies: () => cookieStore,
+  } as RouteClientOptions);
 }

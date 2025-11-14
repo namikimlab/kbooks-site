@@ -93,7 +93,7 @@ export default async function UserProfilePage({
     notFound();
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const [{ data: profile, error: profileError }, userResult] = await Promise.all([
     supabase

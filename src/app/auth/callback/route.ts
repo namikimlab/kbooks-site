@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseRouteHandlerClient } from "@/lib/supabaseServerClients";
 
 export async function GET(request: Request) {
-  const supabase = createSupabaseRouteHandlerClient();
+  const supabase = await createSupabaseRouteHandlerClient();
 
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");

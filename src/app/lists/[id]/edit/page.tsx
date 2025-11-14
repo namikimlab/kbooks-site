@@ -24,7 +24,7 @@ export default async function EditListPage({ params }: { params: EditPageParams 
 
   const editPath = `/lists/${id}/edit`;
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const [{ data: list, error: listError }, authResult] = await Promise.all([
     supabase
       .from("user_list")
