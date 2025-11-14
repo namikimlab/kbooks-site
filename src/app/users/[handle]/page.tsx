@@ -30,6 +30,7 @@ type ProfileSearchParams = {
   likesView?: string;
   readsPage?: string;
   readsView?: string;
+  listsView?: string;
   profileUpdated?: string;
 };
 
@@ -192,7 +193,7 @@ export default async function UserProfilePage({
     readsView: requestedReadsView,
     readsPage: String(readsPageForDisplay),
   };
-  const listsSearchParamsBase = {
+  const listsSearchParamsBase: Record<string, string> = {
     ...normalizedSearchParams,
     tab: "lists",
   };

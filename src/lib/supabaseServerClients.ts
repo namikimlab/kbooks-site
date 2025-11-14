@@ -4,16 +4,16 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
+export function createSupabaseServerClient() {
+  const cookieStore = cookies();
   return createServerComponentClient({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   });
 }
 
-export async function createSupabaseRouteHandlerClient() {
-  const cookieStore = await cookies();
+export function createSupabaseRouteHandlerClient() {
+  const cookieStore = cookies();
   return createRouteHandlerClient({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   });
 }
