@@ -231,7 +231,7 @@ function EmptyLikesState({ isOwner, profileNickname }: { isOwner: boolean; profi
           <p className="mt-2">마음에 드는 책을 찾아 응원해 보세요.</p>
         </>
       ) : (
-        <p>{profileNickname}님이 아직 공개한 좋아요가 없어요.</p>
+        <p>{profileNickname}님이 아직 좋아요를 남기지 않았어요.</p>
       )}
     </div>
   );

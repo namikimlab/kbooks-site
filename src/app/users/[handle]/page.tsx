@@ -246,11 +246,11 @@ export default async function UserProfilePage({
         ) : null}
       </div>
 
-      <div className="mt-10 w-full">
+      <div className="mt-4 w-full">
         <UserActivitySection />
       </div>
 
-      <div className="mt-12">
+      <div className="mt-4">
         <Tabs defaultValue={activeTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="likes">좋아요</TabsTrigger>
