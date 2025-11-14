@@ -104,16 +104,25 @@ export function ListSaveToggle({ variant }: { variant: "indicator" | "cta" }) {
         type="button"
         onClick={toggle}
         disabled={loading}
-        className="flex flex-col items-center gap-1 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="flex flex-col items-center gap-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-pressed={saved}
       >
-        <Star
-          className={cn("h-6 w-6 transition", saved ? "text-amber-500" : "text-muted-foreground")}
-          strokeWidth={saved ? 0 : 2}
-          fill={saved ? "currentColor" : "none"}
-          aria-hidden
-        />
-        <span>{count.toLocaleString()}</span>
+        <span
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full border transition",
+            saved
+              ? "border-amber-400 bg-amber-50 text-amber-500"
+              : "border-muted-foreground/30 text-muted-foreground"
+          )}
+        >
+          <Star
+            className="h-4.5 w-4.5 transition"
+            strokeWidth={saved ? 0 : 2}
+            fill={saved ? "currentColor" : "none"}
+            aria-hidden
+          />
+        </span>
+        <span className="text-sm font-semibold text-foreground">{count.toLocaleString()}</span>
       </button>
     );
   }

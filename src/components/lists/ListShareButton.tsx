@@ -94,10 +94,10 @@ export function ListShareButton({ title, variant = "icon", className }: ListShar
     <button
       type="button"
       onClick={handleShare}
-      className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="inline-flex items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-background transition hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label="리스트 공유"
     >
-      <Share2 className="h-4 w-4" />
+      <Share2 className="h-3.5 w-3.5" />
       <span>공유</span>
     </button>
   );

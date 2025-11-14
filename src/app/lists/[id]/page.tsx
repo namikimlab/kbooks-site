@@ -48,7 +48,7 @@ type DisplayBook = {
 type BasicBookRow = Pick<BookRow, "isbn13" | "title" | "author">;
 
 const META_ITEM_CLASS =
-  "inline-flex items-center gap-2 text-xs font-medium text-muted-foreground whitespace-nowrap";
+  "inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground whitespace-nowrap";
 
 export default async function UserListDetailPage({
   params,
@@ -246,7 +246,7 @@ export default async function UserListDetailPage({
           </div>
         </div>
 
-        <div className="mb-6 flex w-full flex-wrap items-center gap-6 text-sm text-muted-foreground sm:gap-8">
+        <div className="mb-6 flex w-full flex-wrap items-center gap-4 text-sm text-muted-foreground sm:gap-8">
           <span className={META_ITEM_CLASS}>
             <BookOpen className="h-4 w-4" aria-hidden />
             {`${bookCount.toLocaleString()}권 포함`}

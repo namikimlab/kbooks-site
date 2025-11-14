@@ -16,8 +16,7 @@ export function FounderNoteSection() {
         로 알려주세요.
       </p>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        디자인, 코딩, 마케팅, 법률 등등 같이 하실 분들 대환영! 집에서 혼자해서 초큼 외로울때 있음- (그치만 그거슨 나의
-        데스티니💫) 회사 이름은 <span className="font-medium text-foreground">하늘치 데이터 연구소</span> (영감 from 눈마새)예요.
+        디자인, 코딩, 마케팅, 법률 등등 같이 하실 분들 대환영! 집에서 혼자해서 초큼 외로울때 있음- (그냥 수다나 작은 의견도 감사🙏) 회사 이름은 <span className="font-medium text-foreground">하늘치 데이터 연구소</span> (영감 from 눈마새)예요.
         앞으로도 많이 만들 예정이니 응원 부탁드려요. 감사해요 ☺️
       </p>
       <div className="space-y-2 rounded-2xl bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
