@@ -59,7 +59,7 @@ export default async function SearchPage({ searchParams }: Props) {
               const year = b.datetime ? new Date(b.datetime).getFullYear() : null;
               const isAboveFoldCandidate = index < 4; // Preload images likely visible on initial viewport
               return (
-                <li key={b.isbn13} className="h-full">
+                <li key={`${b.isbn13 ?? "unknown"}-${index}`} className="h-full">
                   <Card className="overflow-hidden transition hover:shadow-sm h-full">
                     <Link href={`/books/${b.isbn13}`} className="block h-full">
                       <CardContent className="flex h-full flex-col">

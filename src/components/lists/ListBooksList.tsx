@@ -147,18 +147,18 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
       {isSaving ? (
         <p className="text-xs text-muted-foreground">순서를 저장하는 중...</p>
       ) : null}
-      <ul className="space-y-3">
+      <ul className="space-y-1">
         {items.map((book, index) => {
           const order = book.position ?? index + 1;
           const isDragging = draggingIndex === index;
           return (
             <li
               key={book.isbn13}
-              className="flex items-stretch gap-3 py-1 pl-2 pr-1"
+              className="flex items-stretch gap-1 py-1 pl-1 pr-1"
               onDragOver={handleDragOver}
               onDrop={handleDrop(index)}
             >
-              <span className="w-5 text-right text-lg font-semibold text-amber-800 sm:text-xl">
+              <span className="w-5 text-right text-lg font-semibold sm:text-xl">
                 {order}
               </span>
               <div
@@ -184,7 +184,7 @@ export function ListBooksList({ listId, books, isOwner }: ListBooksListProps) {
                     <span className="line-clamp-2 text-lg font-semibold text-foreground">
                       {book.title ?? "제목 정보 없음"}
                     </span>
-                    <span className="truncate text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground line-clamp-2 break-words">
                       {book.author ?? "저자 정보 없음"}
                     </span>
                   </div>

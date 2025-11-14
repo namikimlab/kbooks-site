@@ -15,7 +15,7 @@ This is a Next.js 15 App Router project focused on a social reading/list platfor
 - `page.tsx`: landing/home page.
 - `/books/[id]/page.tsx`: book detail page; fetches book metadata, triggers background enrichment, renders `BookActionButtons`.
 - `/lists/new/page.tsx`: client form for creating lists (title/description/visibility) via `/api/user-lists`.
-- `/lists/[id]/page.tsx`: server-rendered list detail—title, owner info, orderable book list, edit/share controls. Uses `ListBooksList` for drag/touch reordering via `/api/user-lists/[id]/positions` and now surfaces list-like controls (inline heart indicator + sticky CTA) backed by `user_list_like`.
+- `/lists/[id]/page.tsx`: server-rendered list detail—title, owner info, orderable book list, edit/share controls. Uses `ListBooksList` for drag/touch reordering via `/api/user-lists/[id]/positions` and now surfaces list-save controls (inline star indicator + sticky CTA) backed by `user_list_save`.
 - `/lists/[id]/edit/page.tsx`: edit UI for title/description/visibility; protected via Supabase auth.
 - `/users/[handle]/page.tsx`: profile hub with tabs for activity, likes, reads, lists. Renders summary components from `src/components/users`.
 - `/profile/edit/page.tsx`: profile editing form. Strict server-side validation keeps handles lowercase and unique, blocks reserved words, enforces rate limiting, validates nickname/link constraints, and sanitizes avatar uploads (type + ≤1.5 MB). After saving, redirects back to the profile page with a toast flag.

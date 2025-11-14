@@ -7,13 +7,13 @@ import { cookies } from "next/headers";
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   return createServerComponentClient({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   });
 }
 
 export async function createSupabaseRouteHandlerClient() {
   const cookieStore = await cookies();
   return createRouteHandlerClient({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   });
 }

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ListBooksList } from "@/components/lists/ListBooksList";
 import { ListCoverCollage } from "@/components/lists/ListCoverCollage";
 import { ListShareButton } from "@/components/lists/ListShareButton";
-import { ListLikeProvider, ListLikeToggle } from "@/components/lists/ListLikeToggle";
+import { ListSaveProvider, ListSaveToggle } from "@/components/lists/ListSaveToggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { BookRow } from "@/lib/books";
@@ -93,7 +93,7 @@ export default async function UserListDetailPage({
   const [
     { data: ownerProfile, error: ownerError },
     { data: membershipRows, error: membershipError },
-    { count: likesCountRaw, error: likesCountError },
+    { count: savesCountRaw, error: savesCountError },
   ] = await Promise.all([
     supabase
       .from("user_profile")
@@ -107,7 +107,7 @@ export default async function UserListDetailPage({
       .order("position", { ascending: true, nullsFirst: false })
       .order("isbn13", { ascending: true }),
     supabase
-      .from("user_list_like")
+      .from("user_list_save")
       .select("list_id", { count: "exact", head: true })
       .eq("list_id", list.id),
   ]);
@@ -120,8 +120,8 @@ export default async function UserListDetailPage({
     console.error(`[list-detail] failed to fetch books for list id=${list.id}`, membershipError);
   }
 
-  if (likesCountError) {
-    console.error(`[list-detail] failed to fetch likes count for list id=${list.id}`, likesCountError);
+  if (savesCountError) {
+    console.error(`[list-detail] failed to fetch saves count for list id=${list.id}`, savesCountError);
   }
 
   const owner: OwnerProfileRow = ownerProfile ?? {
@@ -131,20 +131,20 @@ export default async function UserListDetailPage({
     avatar_url: null,
   };
 
-  const likesCount = likesCountRaw ?? 0;
+  const savesCount = savesCountRaw ?? 0;
 
-  let viewerLiked = false;
+  let viewerSaved = false;
   if (viewerId) {
-    const { data: likedRow, error: likedError } = await supabase
-      .from("user_list_like")
+    const { data: savedRow, error: savedError } = await supabase
+      .from("user_list_save")
       .select("user_id")
       .eq("list_id", list.id)
       .eq("user_id", viewerId)
       .maybeSingle();
-    if (likedError) {
-      console.error(`[list-detail] failed to fetch viewer like state for list id=${list.id}`, likedError);
+    if (savedError) {
+      console.error(`[list-detail] failed to fetch viewer save state for list id=${list.id}`, savedError);
     } else {
-      viewerLiked = Boolean(likedRow);
+      viewerSaved = Boolean(savedRow);
     }
   }
 
@@ -179,12 +179,12 @@ export default async function UserListDetailPage({
 
   const bookCount = books.length;
   return (
-    <ListLikeProvider
+    <ListSaveProvider
       listId={list.id}
-      initialLiked={viewerLiked}
-      initialCount={likesCount}
+      initialSaved={viewerSaved}
+      initialCount={savesCount}
     >
-      <section className="mx-auto px-2 py-4 pb-24 max-w-6xl">
+      <section className="mx-auto px-2 py-4 max-w-6xl">
       <header className="space-y-4">
         <ListCoverCollage isbnList={books.map(book => book.isbn13)} />
         <div className="space-y-3">
@@ -192,7 +192,7 @@ export default async function UserListDetailPage({
             {list.title}
           </h1>
           {list.description ? (
-            <p className="max-w-3xl whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+            <p className="max-w-3xl whitespace-pre-line break-words text-base leading-relaxed text-muted-foreground">
               {list.description}
             </p>
           ) : null}
@@ -200,10 +200,20 @@ export default async function UserListDetailPage({
 
         <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={owner.avatar_url ?? undefined} alt={`${owner.handle} 아바타`} />
-              <AvatarFallback>{ownerInitials(owner)}</AvatarFallback>
-            </Avatar>
+            <Link
+              href={`/users/${owner.handle}?tab=lists`}
+              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`${owner.nickname ?? owner.handle} 프로필로 이동`}
+            >
+              <Avatar className="h-10 w-10 border border-border">
+                <AvatarImage
+                  src={owner.avatar_url ?? undefined}
+                  alt={`${owner.handle} 아바타`}
+                  className="object-cover"
+                />
+                <AvatarFallback>{ownerInitials(owner)}</AvatarFallback>
+              </Avatar>
+            </Link>
             <div className="space-y-0.5">
               <Link
                 href={`/users/${owner.handle}?tab=lists`}
@@ -232,7 +242,7 @@ export default async function UserListDetailPage({
                 <span>수정</span>
               </div>
             ) : null}
-            <ListLikeToggle variant="indicator" />
+            <ListSaveToggle variant="indicator" />
           </div>
         </div>
 
@@ -256,9 +266,11 @@ export default async function UserListDetailPage({
         <ListBooksList listId={list.id} books={books} isOwner={isOwner} />
       )}
 
-      <ListLikeFloatingButton />
+      <div className="mt-4 px-0 sm:px-0">
+        <ListSaveToggle variant="cta" />
+      </div>
     </section>
-  </ListLikeProvider>
+  </ListSaveProvider>
   );
 }
 
@@ -269,14 +281,6 @@ function ListVisibilityBadge({ isPublic }: { isPublic: boolean }) {
       <Icon className="h-4 w-4" aria-hidden />
       {isPublic ? "공개" : "비공개"}
     </span>
-  );
-}
-
-function ListLikeFloatingButton() {
-  return (
-    <div className="sticky bottom-0 z-30 mt-10 px-4 pb-1.5 sm:px-6 sm:pb-2">
-      <ListLikeToggle variant="cta" />
-    </div>
   );
 }
 

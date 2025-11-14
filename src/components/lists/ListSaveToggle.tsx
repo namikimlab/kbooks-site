@@ -1,35 +1,37 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 import { cn } from "@/lib/utils";
 
-type ListLikeContextValue = {
-  liked: boolean;
+type ListSaveContextValue = {
+  saved: boolean;
   count: number;
   loading: boolean;
   toggle: () => Promise<void>;
 };
 
-const ListLikeContext = createContext<ListLikeContextValue | null>(null);
+const ListSaveContext = createContext<ListSaveContextValue | null>(null);
 
 type ProviderProps = {
   listId: string;
-  initialLiked: boolean;
+  initialSaved: boolean;
   initialCount: number;
   children: ReactNode;
 };
 
-export function ListLikeProvider({
+export function ListSaveProvider({
   listId,
-  initialLiked,
+  initialSaved,
   initialCount,
   children,
 }: ProviderProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const [liked, setLiked] = useState(initialLiked);
+  const router = useRouter();
+  const [saved, setSaved] = useState(initialSaved);
   const [count, setCount] = useState(initialCount);
   const [loading, setLoading] = useState(false);
 
@@ -40,60 +42,61 @@ export function ListLikeProvider({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      window.location.href = "/login";
+      const next = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
+      router.push(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
 
     setLoading(true);
     try {
-      if (liked) {
+      if (saved) {
         const { error } = await supabase
-          .from("user_list_like")
+          .from("user_list_save")
           .delete()
           .eq("list_id", listId)
           .eq("user_id", user.id);
 
         if (error) throw error;
-        setLiked(false);
+        setSaved(false);
         setCount(prev => Math.max(0, prev - 1));
       } else {
-        const { error } = await supabase.from("user_list_like").insert({
+        const { error } = await supabase.from("user_list_save").insert({
           list_id: listId,
           user_id: user.id,
         });
 
         if (error) throw error;
-        setLiked(true);
+        setSaved(true);
         setCount(prev => prev + 1);
       }
     } catch (err) {
-      console.error("[list-like] toggle failed", err);
+      console.error("[list-save] toggle failed", err);
     } finally {
       setLoading(false);
     }
-  }, [liked, listId, loading, supabase]);
+  }, [saved, listId, loading, supabase, router]);
 
   return (
-    <ListLikeContext.Provider
+    <ListSaveContext.Provider
       value={{
-        liked,
+        saved,
         count,
         loading,
         toggle,
       }}
     >
       {children}
-    </ListLikeContext.Provider>
+    </ListSaveContext.Provider>
   );
 }
 
-export function ListLikeToggle({ variant }: { variant: "indicator" | "cta" }) {
-  const context = useContext(ListLikeContext);
+export function ListSaveToggle({ variant }: { variant: "indicator" | "cta" }) {
+  const context = useContext(ListSaveContext);
   if (!context) {
-    throw new Error("ListLikeToggle must be used within a ListLikeProvider");
+    throw new Error("ListSaveToggle must be used within a ListSaveProvider");
   }
 
-  const { liked, count, loading, toggle } = context;
+  const { saved, count, loading, toggle } = context;
 
   if (variant === "indicator") {
     return (
@@ -102,13 +105,12 @@ export function ListLikeToggle({ variant }: { variant: "indicator" | "cta" }) {
         onClick={toggle}
         disabled={loading}
         className="flex flex-col items-center gap-1 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        aria-pressed={liked}
+        aria-pressed={saved}
       >
-        <Heart
-          className={cn(
-            "h-6 w-6 transition",
-            liked ? "text-rose-500 fill-rose-500" : "text-muted-foreground"
-          )}
+        <Star
+          className={cn("h-6 w-6 transition", saved ? "text-amber-500" : "text-muted-foreground")}
+          strokeWidth={saved ? 0 : 2}
+          fill={saved ? "currentColor" : "none"}
           aria-hidden
         />
         <span>{count.toLocaleString()}</span>
@@ -121,15 +123,20 @@ export function ListLikeToggle({ variant }: { variant: "indicator" | "cta" }) {
       type="button"
       onClick={toggle}
       disabled={loading}
-      aria-pressed={liked}
+      aria-pressed={saved}
       className={cn(
-        "mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
-        liked ? "bg-rose-600 hover:bg-rose-600/90" : "bg-rose-500 hover:bg-rose-500/90",
+        "mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400",
+        saved ? "bg-amber-600 hover:bg-amber-600/90" : "bg-amber-500 hover:bg-amber-500/90",
         loading && "opacity-80"
       )}
     >
-      <Heart className="h-5 w-5" aria-hidden />
-      <span>좋은 리스트에요</span>
+      <Star
+        className="h-5 w-5"
+        strokeWidth={saved ? 0 : 2}
+        fill={saved ? "currentColor" : "none"}
+        aria-hidden
+      />
+      <span>{saved ? "저장 완료" : "리스트 저장하기"}</span>
     </button>
   );
 }

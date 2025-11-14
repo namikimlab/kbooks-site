@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowserClient";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,5 +98,13 @@ export default function AdminLoginPage() {
         ) : null}
       </div>
     </section>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<section className="py-16 text-center text-sm text-muted-foreground">로그인 화면을 불러오는 중이에요…</section>}>
+      <AdminLoginContent />
+    </Suspense>
   );
 }
