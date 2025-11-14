@@ -11,12 +11,12 @@ export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   return createServerComponentClient({
     cookies: () => cookieStore,
-  } as ServerClientOptions);
+  } as unknown as ServerClientOptions);
 }
 
 export async function createSupabaseRouteHandlerClient() {
   const cookieStore = await cookies();
   return createRouteHandlerClient({
     cookies: () => cookieStore,
-  } as RouteClientOptions);
+  } as unknown as RouteClientOptions);
 }
