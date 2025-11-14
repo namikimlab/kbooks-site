@@ -59,7 +59,7 @@ const RATE_LIMIT_MS = 5000;
 async function upsertProfile(formData: FormData) {
   "use server";
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -294,7 +294,7 @@ export default async function ProfileEditPage({
 }) {
   const { error: errorMessage } = await searchParams;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

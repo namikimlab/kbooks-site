@@ -15,7 +15,7 @@ type UpdateListPayload = {
 };
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error: authError,
@@ -70,7 +70,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error: authError,
@@ -192,7 +192,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error: authError,

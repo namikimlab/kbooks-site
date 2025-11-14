@@ -11,7 +11,7 @@ type MembershipPayload = {
 };
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
 
   const {
     data: { user },

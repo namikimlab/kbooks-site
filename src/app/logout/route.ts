@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseRouteHandlerClient } from "@/lib/supabaseServerClients";
 
 async function handle(request: Request) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
   await supabase.auth.signOut();
   return NextResponse.redirect(new URL("/", request.url));
 }

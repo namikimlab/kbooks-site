@@ -9,7 +9,7 @@ type CreateListPayload = {
 };
 
 export async function POST(req: Request) {
-  const supabase = await createSupabaseRouteHandlerClient();
+  const supabase = createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error: authError,

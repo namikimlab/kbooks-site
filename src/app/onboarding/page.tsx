@@ -25,7 +25,7 @@ function buildFallbackHandle(userId: string) {
 async function completeOnboarding(formData: FormData) {
   "use server";
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -70,7 +70,7 @@ async function completeOnboarding(formData: FormData) {
 }
 
 export default async function OnboardingPage({ searchParams }: { searchParams: SearchParams }) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

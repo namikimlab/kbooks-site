@@ -63,7 +63,7 @@ export default async function UserListDetailPage({
     notFound();
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   const [{ data: list, error: listError }, authResult] = await Promise.all([
     supabase
