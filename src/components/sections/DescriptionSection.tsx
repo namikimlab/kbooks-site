@@ -1,6 +1,6 @@
 export default function DescriptionSection() {
   return (
-    <section className="flex flex-col items-center text-center py-12">
+    <section className="flex flex-col items-center text-center">
       <h1 className="text-3xl font-bold tracking-tight">책판</h1>
       <p className="mt-4 max-w-2xl text-muted-foreground">
         책판은 판매량에 관계없이 좋은 책을 발굴하고 서로 추천하는
